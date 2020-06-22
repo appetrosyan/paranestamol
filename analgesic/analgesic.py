@@ -8,68 +8,78 @@ from os.path import splitext, relpath
 from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
 from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore
 from anesthetic.plot import make_2d_axes
+from anesthetic.plot import get_legend_proxy
+from samples_model import SamplesModel
+import matplotlib.pyplot as plt
+
+
 
 class DisplayBridge(QtCore.QObject):
-    coordinatesChanged = QtCore.Signal(str)
+    notify = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.figure = None
         self._coordinates = ""
-        self.offset = 0
+        self.beta = 0
         self.canvas = None
         self.axes = None
-        self._samples = None
+        self._sample = None
         self.samples = dict()
+        self.params = []
 
-    def updateWithCanvas(self, canvas=None):
-        if canvas is not None:
-            self.canvas = canvas
-            self.figure = canvas.figure
-        if self.samples:
-            self.figure.clear()
-            for x in self.samples:
-                params = [y for y in self.samples[x].columns[:5]]
-                self.figure, self.axes = make_2d_axes(params)
-            self.canvas.draw_idle()
+    def updateTrianglePlot(self):
+        self.figure.clear()
+        q, r = self.samples.popitem()
+        # Proof python was designed by morons!
+        self.samples[q] = r
+        # end proof
+        self.params = [y for y in self.samples[q].columns[:3]]
+        self.figure, self.axes = make_2d_axes(self.params, fig=self.figure)
+        for x in self.samples:
+            self.samples[x].plot_2d(self.axes, alpha=0.7,
+                                    color=self.legends[x].color,
+                                    label=self.legends[x].title)
+        handles, labels = self.axes[self.params[0]][self.params[1]]\
+                              .get_legend_handles_labels()
+        self.figure.legend(handles, labels)
+        self.canvas.draw_idle()
 
     @QtCore.Slot(int)
-    def changeTemperature(self, x, *args):
-        """Modify the temperature."""
-        self.offset = x
-        self.updateWithCanvas(self.canvas)
+    def changeTemperature(self, beta, *args):
+        self.beta = beta
+        self.updateTrianglePlot()
 
-    @QtCore.Slot(str, result=str)
-    def loadSamples(self, file_root, *args):
-        try:
-            from anesthetic import NestedSamples
-            rt, _ = splitext(file_root)
-            self._samples = NestedSamples(root=rt)
-            return str(relpath(rt))
-        except ImportError:
-            print("Cannot import anesthetic.")
-
-    @QtCore.Slot(str)
-    def loadSamplesCallback(self, name, *args):
-        self.samples[name] = self._samples
-        print(name)
+    @QtCore.Slot(object, object)
+    def reDraw(self, samples=None, legends=None, *args):
+        if samples:
+            self.samples = samples
+        if legends:
+            self.legends = legends
+        self.updateTrianglePlot()
 
 
 def main():
-    """Main function."""
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     sys.argv += ['--style', 'material']
     app = QtGui.QGuiApplication(sys.argv)
     engine = QtQml.QQmlApplicationEngine()
     displayBridge = DisplayBridge()
+
     context = engine.rootContext()
     context.setContextProperty("displayBridge", displayBridge)
+    samplesModel = SamplesModel()
+    samplesModel.repaint.connect(displayBridge.reDraw)
+    context.setContextProperty("samplesModel", samplesModel)
     QtQml.qmlRegisterType(FigureCanvasQtQuickAgg,
                           "Backend", 1, 0, "FigureCanvas")
     qmlFile = Path(Path.cwd(), Path(__file__).parent, "view.qml")
     engine.load(QtCore.QUrl.fromLocalFile(str(qmlFile)))
     win = engine.rootObjects()[0]
-    displayBridge.updateWithCanvas(win.findChild(QtCore.QObject, "figure"))
+    displayBridge.notify.connect(win.displayPythonMessage)
+
+    displayBridge.canvas = win.findChild(QtCore.QObject, "figure")
+    displayBridge.figure = displayBridge.canvas.figure
     app.exec_()
 
 
