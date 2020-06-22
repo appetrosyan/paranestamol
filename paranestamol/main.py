@@ -9,7 +9,7 @@ from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
 from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore
 from anesthetic.plot import make_2d_axes
 from anesthetic.plot import get_legend_proxy
-from samples_model import SamplesModel
+from paranestamol.samples_model import SamplesModel
 import matplotlib.pyplot as plt
 
 

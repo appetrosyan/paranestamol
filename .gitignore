@@ -1,0 +1,8 @@
+/.DS_Store
+/.idea/
+/Paranestamol.egg-info/
+/Pipfile.lock
+/paranestamol/.DS_Store
+/paranestamol/__pycache__/
+/build/
+/dist/
