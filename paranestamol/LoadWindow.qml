@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.0
 
 
-ColumnLayout{
+Item{
 	property var fileModel
 	property alias fileName: fileRootBox.text
 	signal browseForFile()
@@ -14,27 +14,29 @@ ColumnLayout{
 		title: qsTr("Please select legend color")
 		visible: false
 	}
-	
-	width: 500
 	height: 200
-	RowLayout{
-		TextField{
-			id: fileRootBox
-			Layout.fillWidth: true
-			selectByMouse: true
-			placeholderText: qsTr("Path to samples `file_root`")
-			text: "/Users/app/Downloads/data.1908.09139/klcdm/chains/BAO.inputparams"
+	TextField{
+		id: fileRootBox
+		anchors.top: parent.top
+		anchors.left: parent.left
+		anchors.right: browseButton.left
+		anchors.rightMargin: 8
+		selectByMouse: true
+		placeholderText: qsTr("Path to samples `file_root`")
+		text: "/Users/app/Downloads/data.1908.09139/klcdm/chains/BAO.inputparams"
+	}
+	Button{
+		id: browseButton
+		anchors.top: parent.top
+		anchors.right: parent.right
+		onClicked: {
+			browseForFile()
 		}
-		Button{
-			id: browseButton
-			onClicked: {
-				browseForFile()
-			}
-			text: qsTr("Browse...")
-		}
+		text: qsTr("Browse...")
 	}
 	Rectangle{
 		id: fileViewRect
+		anchors.top: fileRootBox.bottom
 		width: parent.width
 		height: parent.height-fileRootBox.height-loadButton.height
 		border.color: "black"
@@ -44,6 +46,12 @@ ColumnLayout{
 			anchors.fill: parent
 			anchors.centerIn: parent
 			model: fileModel
+			ScrollIndicator.vertical: ScrollIndicator{
+				parent: fileView.parent
+				anchors.top: fileView.top
+				anchors.bottom: fileView.bottom
+				anchors.right: parent.right
+			}
 			clip: true
 			delegate: Component{
 				Item{
@@ -60,9 +68,10 @@ ColumnLayout{
 						id: legendColor
 						color: model.legend_color
 						anchors.left: display.right
-						anchors.verticalCenter: display.verticalCenter
+						anchors.top: parent.top
+						anchors.topMargin: 14
+						anchors.verticalCenter: fileLine.verticalCenter
 						width: 10
-						height: fileLine.height-2
 						MouseArea {
 							anchors.fill: parent
 							signal updaColor()
@@ -80,21 +89,35 @@ ColumnLayout{
 					}
 					TextInput{
 						id: fileLine
+						anchors.top: legendColor.top
 						anchors.left: legendColor.right
-						anchors.verticalCenter: legendColor.verticalCenter
+						anchors.leftMargin: 5
+						anchors.right: parent.right
+						wrapMode: TextInput.Wrap
 						text: model.legend_name
 						width: 100
+						font.bold: true
+						font.pointSize: 16
 						onAccepted:{
 							model.legend_name = text
 							text = model.legend_name
+						}
+						Component.onCompleted:{
+							fileLine.ensureVisible(0)
 						}
 					}
 					Text{
 						id: pathLine
 						anchors.top: fileLine.bottom
+						anchors.left: parent.left
 						anchors.right: parent.right
 						text: model.url
-						elide: Text.ElideLeft
+						leftPadding: 5
+						topPadding: 5
+						bottomPadding: 5
+						rightPadding: 8
+						horizontalAlignment: Text.AlignRight
+						elide: Text.ElideRight
 					}
 				}
 			}
@@ -111,7 +134,7 @@ ColumnLayout{
 					}
 				}
 			}
-			highlightFollowsCurrentItem: false
+			highlightFollowsCurrentItem: true
 			focus: true
 		}
 	}
@@ -121,6 +144,7 @@ ColumnLayout{
 			requestLoadSamples(fileRootBox.text)
 		}
 		text: qsTr("Load samples")
+		anchors.top: fileViewRect.bottom
 	}
 }
 

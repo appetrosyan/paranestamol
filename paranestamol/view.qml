@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtQuick.Controls.Material 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Window 2.12
 import QtQuick.Dialogs 1.0
@@ -29,7 +30,10 @@ ApplicationWindow {
 		folder: shortcuts.home
 		onAccepted: {
 			loadWindow.fileName = fileBrowse.fileUrl
-			loadWindow.fileName = loadWindow.fileName.substring(7)
+			var path = fileBrowse.fileUrl.toString();
+			path= path.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"");
+			var cleanPath = decodeURIComponent(path);
+			loadWindow.fileName = cleanPath
 		}
 	}
 	
@@ -41,6 +45,7 @@ ApplicationWindow {
 			LoadWindow{
 				id: loadWindow
 				fileModel: samplesModel
+				anchors.fill: parent
 				onBrowseForFile:{
 					fileBrowse.visible=true
 				}
@@ -48,18 +53,23 @@ ApplicationWindow {
 					fileModel.appendRow(filename)
 				}
 				anchors.centerIn: parent
-				height: 300
-				width: 500
+				anchors.leftMargin: 8
+				anchors.rightMargin: 8
+				anchors.topMargin: 8
+				anchors.bottomMargin: 8
 			}
 		}
 		Page {
 			title: "Nested Samples view"
 			FigureCanvas {
 				id: mplView
-				width: 700
+				anchors.left: parent.left
+				anchors.right: temperature.left
+				anchors.top: parent.top
+				anchors.bottom: parent.bottom
 				implicitWidth: 700
 				height: 500
-				objectName : "figure"
+				objectName : "trianglePlot"
 			}
 			GaussianBlur{
 				id: viewBlur
@@ -89,7 +99,7 @@ ApplicationWindow {
 				}
 				text: 'beta'
 				orientation: Qt.Vertical
-				anchors.left: mplView.right
+				width: 60
 				anchors.right: parent.right
 				anchors.top: mplView.top
 				anchors.bottom: mplView.bottom
@@ -101,6 +111,7 @@ ApplicationWindow {
 		currentIndex: mainView.currentIndex
 		anchors.bottom: mainView.bottom
 		anchors.horizontalCenter: mainView.horizontalCenter
+		interactive: true
 	}
 	footer: Text{
 		id: statusBar

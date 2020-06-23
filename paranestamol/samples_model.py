@@ -16,6 +16,7 @@ class Legend:
 
 class SamplesModel(QtCore.QAbstractListModel):
     repaint = QtCore.Signal(object, object)
+    notify = QtCore.Signal(str)
 
     nameRole = QtCore.Qt.UserRole + 1000 + 0
     urlRole = QtCore.Qt.UserRole + 1000 + 1
@@ -71,6 +72,8 @@ class SamplesModel(QtCore.QAbstractListModel):
     @QtCore.Slot(str)
     def appendRow(self, file_root, *args):
         rt, _ = splitext(file_root)
+        self.notify.emit('Loading...')
+        print('notify emitted')
         if basename(rt) not in self.names:
             self.beginInsertRows(QtCore.QModelIndex(),
                                  self.rowCount(), self.rowCount())
@@ -120,6 +123,7 @@ class SamplesModel(QtCore.QAbstractListModel):
 
     def __init__(self, parent=None):
         super(SamplesModel, self).__init__(parent)
+        self.notify.emit('Python is degisned by morons. Pyside2 is very pythonic indeed. ')
         self.names = []
         self.samples = {}
         self.legends = {}

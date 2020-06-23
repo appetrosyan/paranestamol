@@ -4,14 +4,10 @@ An example of using the backend
 """
 import sys
 from pathlib import Path
-from os.path import splitext, relpath
 from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
 from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore
 from anesthetic.plot import make_2d_axes
-from anesthetic.plot import get_legend_proxy
-from paranestamol.samples_model import SamplesModel
-import matplotlib.pyplot as plt
-
+from .samples_model import SamplesModel
 
 
 class DisplayBridge(QtCore.QObject):
@@ -77,8 +73,9 @@ def main():
     engine.load(QtCore.QUrl.fromLocalFile(str(qmlFile)))
     win = engine.rootObjects()[0]
     displayBridge.notify.connect(win.displayPythonMessage)
+    # samplesModel.notify.connect(win.displayPythonMessage)
 
-    displayBridge.canvas = win.findChild(QtCore.QObject, "figure")
+    displayBridge.canvas = win.findChild(QtCore.QObject, "trianglePlot")
     displayBridge.figure = displayBridge.canvas.figure
     app.exec_()
 
