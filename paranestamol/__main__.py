@@ -22,34 +22,21 @@ class DisplayBridge(QtCore.QObject):
         self._coordinates = ""
         self.beta = 0
         self.canvas = None
-        self.axes = None
+        # self.axes = None
         self._sample = None
         self.samples = dict()
         self.params = []
 
-    def updateTrianglePlot(self):
-        self.figure = plt.figure()
-        q, r = self.samples.popitem()
-        # Proof python was designed by morons!
-        self.samples[q] = r
-        # end proof
-        self.params = [y for y in self.samples[q].columns[:3]]
-        self.figure, self.axes = make_2d_axes(self.params, fig=self.figure)
-        for x in self.samples:
-            self.samples[x].plot_2d(self.axes, alpha=0.7,
-                                    color=self.legends[x].color,
-                                    label=self.legends[x].title)
-        handles, labels = self.axes[self.params[0]][self.params[1]]\
-                              .get_legend_handles_labels()
-        self.figure.legend(handles, labels)
-        self.canvas.figure = self.figure
-        self.figure.set_canvas(self.canvas)
-        self.canvas.draw_idle()
+   
+
 
     @QtCore.Slot(int)
     def changeTemperature(self, beta, *args):
         self.beta = beta
-        self.updateTrianglePlot()
+        fig = updateTrianglePlot(self, plt.figure())
+        self.canvas.figure = fig
+        fig.set_canvas(self.canvas)
+        self.canvas.draw_idle()
 
     @QtCore.Slot(object, object)
     def reDraw(self, samples=None, legends=None, *args):
@@ -57,7 +44,27 @@ class DisplayBridge(QtCore.QObject):
             self.samples = samples
         if legends:
             self.legends = legends
-        self.updateTrianglePlot()
+        if self.params ==[]:
+            q, r = self.samples.popitem()
+            # Proof python was designed by morons!
+            self.samples[q] = r
+            # end proof
+            self.params = [y for y in self.samples[q].columns[:3]]
+        updateTrianglePlot(self, self.canvas.figure)
+        self.canvas.draw_idle()
+
+
+def updateTrianglePlot(bridge, figure):
+    figure.clear()
+    figure, axes = make_2d_axes(bridge.params, fig=figure)
+    for x in bridge.samples:
+        bridge.samples[x].plot_2d(axes, alpha=0.7,
+                                  color=bridge.legends[x].color,
+                                  label=bridge.legends[x].title)
+    handles, labels = axes[bridge.params[0]][bridge.params[1]]\
+        .get_legend_handles_labels()
+    figure.legend(handles, labels)
+    return figure
 
 
 def main():
