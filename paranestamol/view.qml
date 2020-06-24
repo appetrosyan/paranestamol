@@ -17,6 +17,8 @@ ApplicationWindow {
 	minimumWidth: mainView.currentItem.implicitWidth
 	height: 600
 	minimumHeight: mainView.currentItem.implicitHeight
+	Material.theme: Material.Dark
+	Material.accent: Material.Orange
 	ListModel{
 		id: samplesFiles
 	}
@@ -30,13 +32,32 @@ ApplicationWindow {
 		folder: shortcuts.home
 		onAccepted: {
 			loadWindow.fileName = fileBrowse.fileUrl
-			var path = fileBrowse.fileUrl.toString();
-			path= path.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"");
-			var cleanPath = decodeURIComponent(path);
-			loadWindow.fileName = cleanPath
+			loadWindow.fileModel.appendRow(cleanPath)
 		}
 	}
-	
+	header: ToolBar{
+		ToolButton {
+			text: "￩"
+			onClicked: {
+				mainView.decrementCurrentIndex()
+			}
+			anchors.left: parent.left
+		}
+		PageIndicator{
+			count: mainView.count
+			currentIndex: mainView.currentIndex
+			anchors.verticalCenter: parent.verticalCenter
+			anchors.horizontalCenter: parent.horizontalCenter
+			interactive: true
+		}
+		ToolButton {
+			text: "￫"
+			onClicked: {
+				mainView.incrementCurrentIndex()
+			}
+			anchors.right: parent.right
+		}
+	}
 	SwipeView{
 		id: mainView
 		anchors.fill: parent
@@ -64,9 +85,9 @@ ApplicationWindow {
 			FigureCanvas {
 				id: mplView
 				anchors.left: parent.left
+				anchors.leftMargin: 8
 				anchors.right: temperature.left
 				anchors.top: parent.top
-				anchors.bottom: parent.bottom
 				implicitWidth: 700
 				height: 500
 				objectName : "trianglePlot"
@@ -91,11 +112,7 @@ ApplicationWindow {
 				to: 100
 				stepSize: 1
 				onValueChangeStarted: {
-					viewBlur.opacity=1
-				}
-				onValueChangeFinished: {
-					displayBridge.changeTemperature(value)
-					viewBlur.opacity=0
+					displayBridge.changeTemperature(this.value)
 				}
 				text: 'beta'
 				orientation: Qt.Vertical
@@ -104,17 +121,36 @@ ApplicationWindow {
 				anchors.top: mplView.top
 				anchors.bottom: mplView.bottom
 			}
+			Manipulator{
+				id: logL
+				from: -100
+				to: -1
+				onValueChangeStarted: {
+					displayBridge.changeLogL(this.value)
+				}
+				text: 'logL'
+				anchors.left: mplView.left
+				anchors.top: mplView.bottom
+				anchors.bottom: parent.bottom
+				anchors.right: mplView.right
+			}
 		}
 	}
-	PageIndicator{
-		count: mainView.count
-		currentIndex: mainView.currentIndex
-		anchors.bottom: mainView.bottom
-		anchors.horizontalCenter: mainView.horizontalCenter
-		interactive: true
+
+	Popup{
+		x: parent.width - 308
+		y: parent.height - 200
+		width: 300
+		height: 150
+		visible: true
+		transformOrigin: Popup.BottomRight
 	}
+	
 	footer: Text{
 		id: statusBar
 		text: "placeholder"
+		
+		color: Material.foreground
+		font.bold: true
 	}
 }

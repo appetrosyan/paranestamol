@@ -15,7 +15,7 @@ class Legend:
 
 
 class SamplesModel(QtCore.QAbstractListModel):
-    repaint = QtCore.Signal(object, object)
+    fullRepaint = QtCore.Signal(object, object)
     notify = QtCore.Signal(str)
 
     nameRole = QtCore.Qt.UserRole + 1000 + 0
@@ -73,7 +73,6 @@ class SamplesModel(QtCore.QAbstractListModel):
     def appendRow(self, file_root, *args):
         rt, _ = splitext(file_root)
         self.notify.emit('Loading...')
-        print('notify emitted')
         if basename(rt) not in self.names:
             self.beginInsertRows(QtCore.QModelIndex(),
                                  self.rowCount(), self.rowCount())
@@ -85,16 +84,20 @@ class SamplesModel(QtCore.QAbstractListModel):
                 self.displayed_names.add(basename(rt))
             self.endInsertRows()
             self.reqRepaint()
+            self.notify.emit('Loaded.')
         else:
+            self.notify.emit(f'Samples named: {basename(rt)} - already loaded.')
             raise KeyError(
                 f'samples named \'{basename(rt)}\' already present.')
 
     def flags(self, index):
-        return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return QtCore.Qt.ItemIsEditable | \
+               QtCore.Qt.ItemIsEnabled | \
+               QtCore.Qt.ItemIsSelectable
 
     def reqRepaint(self):
-        self.repaint.emit({k: self.samples[k] for k in self.displayed_names},
-                          {k: self.legends[k] for k in self.displayed_names})
+        self.fullRepaint.emit({k: self.samples[k] for k in self.displayed_names},
+                              {k: self.legends[k] for k in self.displayed_names})
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == SamplesModel.legendNameRole:

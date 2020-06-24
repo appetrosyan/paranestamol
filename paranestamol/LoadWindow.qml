@@ -1,4 +1,5 @@
 import QtQuick.Controls 2.12
+import QtQuick.Controls.Material 2.12
 import QtQuick 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.0
@@ -20,26 +21,48 @@ Item{
 		anchors.top: parent.top
 		anchors.left: parent.left
 		anchors.right: browseButton.left
+		color: Material.foreground
 		anchors.rightMargin: 8
 		selectByMouse: true
 		placeholderText: qsTr("Path to samples `file_root`")
-		text: "/Users/app/Downloads/data.1908.09139/klcdm/chains/BAO.inputparams"
+		onTextChanged: {
+			text= text.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"")
+			var cleanPath = decodeURIComponent(path)
+			fileName = cleanPath
+		}
 	}
 	Button{
 		id: browseButton
 		anchors.top: parent.top
-		anchors.right: parent.right
+		anchors.right: loadButton.left
 		onClicked: {
 			browseForFile()
 		}
 		text: qsTr("Browse...")
 	}
+	Button{
+		id: loadButton
+		onClicked:{
+			requestLoadSamples(fileRootBox.text)
+		}
+		text: qsTr("Load samples")
+		anchors.top: parent.top
+		anchors.right: parent.right
+	}
 	Rectangle{
+		DropArea {
+			anchors.fill: parent
+			onDropped :{
+				fileRootBox.text = drop.text
+				requestLoadSamples(fileRootBox.text)
+			}
+		}
 		id: fileViewRect
 		anchors.top: fileRootBox.bottom
 		width: parent.width
 		height: parent.height-fileRootBox.height-loadButton.height
-		border.color: "black"
+		border.color: Material.foreground
+		color: Material.background
 		border.width: 1
 		ListView{
 			id: fileView
@@ -93,6 +116,7 @@ Item{
 						anchors.left: legendColor.right
 						anchors.leftMargin: 5
 						anchors.right: parent.right
+						color: Material.foreground
 						wrapMode: TextInput.Wrap
 						text: model.legend_name
 						width: 100
@@ -111,6 +135,7 @@ Item{
 						anchors.top: fileLine.bottom
 						anchors.left: parent.left
 						anchors.right: parent.right
+						color: Material.foreground
 						text: model.url
 						leftPadding: 5
 						topPadding: 5
@@ -123,7 +148,8 @@ Item{
 			}
 			highlight: Rectangle{
 				y: fileView.currentItem.y
-				color: "lightsteelblue"
+				border.color: Material.accent
+				color: Qt.lighter(Material.background)
 				radius: 5
 				width: fileView.currentItem.width
 				height: fileView.currentItem.height
@@ -138,13 +164,6 @@ Item{
 			focus: true
 		}
 	}
-	Button{
-		id: loadButton
-		onClicked:{
-			requestLoadSamples(fileRootBox.text)
-		}
-		text: qsTr("Load samples")
-		anchors.top: fileViewRect.bottom
-	}
+	
 }
 
