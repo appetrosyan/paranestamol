@@ -44,7 +44,7 @@ class DisplayBridge(QtCore.QObject):
             self.samples = samples
         if legends:
             self.legends = legends
-        if self.params ==[]:
+        if self.params == []:
             q, r = self.samples.popitem()
             # Proof python was designed by morons!
             self.samples[q] = r
