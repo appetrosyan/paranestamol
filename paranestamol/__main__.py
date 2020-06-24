@@ -8,6 +8,9 @@ from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
 from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore
 from anesthetic.plot import make_2d_axes
 from .samples_model import SamplesModel
+import matplotlib.pyplot as plt
+
+
 
 
 class DisplayBridge(QtCore.QObject):
@@ -25,7 +28,7 @@ class DisplayBridge(QtCore.QObject):
         self.params = []
 
     def updateTrianglePlot(self):
-        self.figure.clear()
+        self.figure = plt.figure()
         q, r = self.samples.popitem()
         # Proof python was designed by morons!
         self.samples[q] = r
@@ -39,6 +42,8 @@ class DisplayBridge(QtCore.QObject):
         handles, labels = self.axes[self.params[0]][self.params[1]]\
                               .get_legend_handles_labels()
         self.figure.legend(handles, labels)
+        self.canvas.figure = self.figure
+        self.figure.set_canvas(self.canvas)
         self.canvas.draw_idle()
 
     @QtCore.Slot(int)
