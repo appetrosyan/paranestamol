@@ -13,15 +13,17 @@ class Legend:
         self.title = title
         self.color = color  # Let's be international.
 
+
 class ParameterModel(QtCore.QAbstractListModel):
     nameRole = QtCore.Qt.UserRole + 1000 + 0
     texRole = QtCore.Qt.UserRole + 1000 + 1
     selectedRole = QtCore.Qt.UserRole + 1000 + 2
 
-    def __init__(self, parent=None):
-        super(ParameterModel,self).__init__(parent)
-        self.names = {}
-        self.params = {}
+    def __init__(self, parent=None, sample=None):
+        super(ParameterModel, self).__init__(parent)
+        self.names = sample.columns
+        print('created')
+        self.displayNames = set(sample.columns[:3])
 
     def roleNames(self):
         roles = {
@@ -29,6 +31,7 @@ class ParameterModel(QtCore.QAbstractListModel):
             ParameterModel.texRole: b'tex',
             ParameterModel.selectedRole: b'selected'
         }
+        return roles
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
@@ -36,26 +39,23 @@ class ParameterModel(QtCore.QAbstractListModel):
         return len(self.params)
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
-        if 0<= index.row() < self.rowCount() and index.isValid():
+        if 0 <= index.row() < self.rowCount() and index.isValid():
             if role == ParameterModel.nameRole:
                 return self.names[index.row()]
-            show, tex = self.params[self.names[index.row()]]
             if role == ParameterModel.texRole:
-                return tex
+                return self.parent.tex[self.names[index.row()]]
             if role == ParameterModel.selectedRole:
-                return show
+                return self.names[index.row()] in self.displayNames
 
     @QtCore.Slot(str)
     @QtCore.Slot(str, str)
     @QtCore.Slot(str, str, bool)
-    def appendRow(name, tex=None, show=False):
+    def appendRow(self, name, tex=None, show=False):
         self.names.add(name)
-        self.params[name]=(show, tex)
 
-    
 
 class SamplesModel(QtCore.QAbstractListModel):
-    fullRepaint = QtCore.Signal(object, object)
+    fullRepaint = QtCore.Signal(object, object, object)
     notify = QtCore.Signal(str)
 
     nameRole = QtCore.Qt.UserRole + 1000 + 0
@@ -64,6 +64,7 @@ class SamplesModel(QtCore.QAbstractListModel):
     displayRole = QtCore.Qt.UserRole + 1000 + 3
     legendColorRole = QtCore.Qt.UserRole + 1000 + 4
     samplesTypeRole = QtCore.Qt.UserRole + 1000 + 5
+    parametersModel = QtCore.Qt.UserRole + 1000 + 6
 
     def roleNames(self):
         roles = {
@@ -73,6 +74,7 @@ class SamplesModel(QtCore.QAbstractListModel):
             SamplesModel.legendColorRole: b'legend_color',
             SamplesModel.samplesTypeRole: b'samples_type',
             SamplesModel.displayRole: b'display',
+            SamplesModel.parametersModel: b'parameters_model'
         }
         return roles
 
@@ -81,7 +83,7 @@ class SamplesModel(QtCore.QAbstractListModel):
             return 0
         if len(self.names) != len(self.samples):
             raise ValueError(
-                f"Number of samples must match number of samples_names. {len(self.names)}, {len(self.samples)}")
+                f"Number of samples {len(self.names)} must match number of samples_names {len(self.samples)}.")
         return len(self.samples)
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
@@ -108,9 +110,8 @@ class SamplesModel(QtCore.QAbstractListModel):
                     return 'NestedSamples'
                 if isinstance(item, MCMCSamples):
                     return 'MCMCSamples'
-
-          
-        
+            if role == SamplesModel.parametersModel:
+                return self.parameters[self.names[index.row()]]
 
     @QtCore.Slot(str)
     def appendRow(self, file_root, *args):
@@ -126,6 +127,8 @@ class SamplesModel(QtCore.QAbstractListModel):
             self.names.append(basename(rt))
             self.legends[basename(rt)] = Legend(basename(rt))
             self.samples[basename(rt)] = samples
+            self.parameters[basename(rt)] = ParameterModel(self, self.samples[basename(rt)])
+            print(self.parameters)
             self.displayed_names.add(basename(rt))
             self.endInsertRows()
 
@@ -140,8 +143,16 @@ class SamplesModel(QtCore.QAbstractListModel):
                QtCore.Qt.ItemIsSelectable
 
     def reqRepaint(self):
+        a, b = self.parameters.popitem()
+        displayed_params = b.displayNames
+        for k in self.parameters:
+            displayed_params = displayed_params.intersection(self.parameters[k].displayNames)
+        # This isn't the first time. You'll see this stupid pattern again.
+        self.parameters[a] = b
+
         self.fullRepaint.emit({k: self.samples[k] for k in self.displayed_names},
-                              {k: self.legends[k] for k in self.displayed_names})
+                              {k: self.legends[k] for k in self.displayed_names},
+                              list(displayed_params))
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == SamplesModel.legendNameRole:
@@ -174,6 +185,7 @@ class SamplesModel(QtCore.QAbstractListModel):
         self.samples = {}
         self.legends = {}
         self.displayed_names = set()
+        self.parameters = {}
 
 
 def cleanupFileRoot(file_root):
@@ -185,10 +197,10 @@ def cleanupFileRoot(file_root):
     print(f'{root}, {ext}')
     if ext in exts:
         return root, ext
-    elif ext == 'txt':
+    elif ext == '.txt':
         for end in ends:
             try:
                 rt, end = root.rsplit(end, 1)
                 return rt, end+ext
             except ValueError:
-                pass  
+                pass 

@@ -37,7 +37,8 @@ ApplicationWindow {
 	}
 	header: ToolBar{
 		ToolButton {
-			text: "￩"
+			visible: mainView.itemAt(mainView.currentIndex-1)
+			text: visible?mainView.itemAt(mainView.currentIndex-1).title:''
 			onClicked: {
 				mainView.decrementCurrentIndex()
 			}
@@ -51,7 +52,8 @@ ApplicationWindow {
 			interactive: true
 		}
 		ToolButton {
-			text: "￫"
+			visible: mainView.itemAt(mainView.currentIndex+1)
+			text: visible?mainView.itemAt(mainView.currentIndex+1).title:''
 			onClicked: {
 				mainView.incrementCurrentIndex()
 			}
@@ -62,7 +64,7 @@ ApplicationWindow {
 		id: mainView
 		anchors.fill: parent
 		Page{
-			title: "LoadWindow"
+			title: "Load Samples"
 			LoadWindow{
 				id: loadWindow
 				fileModel: samplesModel
@@ -81,7 +83,7 @@ ApplicationWindow {
 			}
 		}
 		Page {
-			title: "Nested Samples view"
+			title: "View Samples"
 			FigureCanvas {
 				id: mplView
 				anchors.left: parent.left
@@ -91,20 +93,6 @@ ApplicationWindow {
 				implicitWidth: 700
 				height: 500
 				objectName : "trianglePlot"
-			}
-			GaussianBlur{
-				id: viewBlur
-				anchors.fill: mplView
-				source: mplView
-				visible: true
-				opacity: 0
-				Behavior on opacity{
-					NumberAnimation{
-
-					}
-				}
-				radius: 24
-				samples: 24
 			}
 			Manipulator{
 				id: temperature
@@ -130,6 +118,37 @@ ApplicationWindow {
 				anchors.bottom: parent.bottom
 				anchors.right: mplView.right
 			}
+			Button{
+				anchors.top: mplView.top
+				anchors.left: mplView.left
+				width: 50
+				height: 50
+				text: '⋮'
+				onClicked: {
+					legendPopup.visible = true
+				}
+				Popup {
+					id: legendPopup
+					width: 300
+					height: 300
+					ListView {
+						model: samplesModel
+						delegate: Component  {
+							Item{
+								height: childrenRect.height
+								width: parent.width
+								Text{
+									text: model.name
+									color: Material.foreground
+								}
+							}
+						}
+						anchors.fill: parent 
+					}
+					
+				}
+			}
+		
 		}
 	}
 

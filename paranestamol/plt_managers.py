@@ -33,25 +33,22 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
-        print(beta)
+        for k in self.samples:
+            self.samples.beta = beta
         fig = updateTrianglePlot(self, plt.figure())
         self.canvas.figure = fig
         fig.set_canvas(self.canvas)
         self.canvas.draw_idle()
 
-    @QtCore.Slot(object, object)
-    def reDraw(self, samples=None, legends=None, *args):
+    @QtCore.Slot(object, object, object)
+    def reDraw(self, samples=None, legends=None, params=None, *args):
         print('repainting')
         if samples:
             self.samples = samples
         if legends:
             self.legends = legends
-        if self.params == []:
-            q, r = self.samples.popitem()
-            # Proof python was designed by morons!
-            self.samples[q] = r
-            # end proof
-            self.params = [y for y in self.samples[q].columns[:3]]
+        if params is not None:
+            self.params = params
         self.notify.emit('Full repaint...')
         updateTrianglePlot(self, self.canvas.figure)
         self.notify.emit('Fully repainted.')
@@ -65,8 +62,7 @@ def updateTrianglePlot(bridge, figure, logL=None):
         bridge.samples[x].plot_2d(axes, alpha=0.7,
                                   color=bridge.legends[x].color,
                                   label=bridge.legends[x].title)
-    if bridge.params != []:
-        handles, labels = axes[bridge.params[0]][bridge.params[1]]\
-            .get_legend_handles_labels()
-        figure.legend(handles, labels)
+    handles, labels = axes[bridge.params[0]][bridge.params[1]]\
+        .get_legend_handles_labels()
+    figure.legend(handles, labels)
     return figure
