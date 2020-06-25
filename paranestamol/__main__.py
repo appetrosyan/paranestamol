@@ -20,8 +20,10 @@ def main():
     displayBridge = TrianglePlotter()
     context = engine.rootContext()
     context.setContextProperty("displayBridge", displayBridge)
+    context.setContextProperty('paramsModel', displayBridge._paramsModel)
     samplesModel = SamplesModel()
     samplesModel.fullRepaint.connect(displayBridge.reDraw)
+    samplesModel.newParams.connect(displayBridge.updateParams)
     context.setContextProperty("samplesModel", samplesModel)
     QtQml.qmlRegisterType(FigureCanvasQtQuickAgg,
                           "Backend", 1, 0, "FigureCanvas")
@@ -30,6 +32,7 @@ def main():
     win = engine.rootObjects()[0]
     displayBridge.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
+    
 
     displayBridge.canvas = win.findChild(QtCore.QObject, "trianglePlot")
     displayBridge.figure = displayBridge.canvas.figure

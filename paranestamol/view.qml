@@ -126,13 +126,15 @@ ApplicationWindow {
 				text: '⋮'
 				onClicked: {
 					legendPopup.visible = true
+					console.log(paramsModel)
 				}
 				Popup {
 					id: legendPopup
 					width: 300
 					height: 300
 					ListView {
-						model: samplesModel
+						id: outerView
+						model: paramsModel
 						delegate: Component  {
 							Item{
 								height: childrenRect.height

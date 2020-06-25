@@ -8,15 +8,18 @@ from anesthetic.samples import NestedSamples, MCMCSamples
 from os.path import splitext, basename
 import matplotlib.pyplot as plt
 
+
 class Legend:
     colorCycles = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     currentColor = 0
+
     def __init__(self, title='', color=None):
         self.title = title
         if color is not None:
             self.color = color  # Let's be international.
         else:
-            self.color = Legend.colorCycles[Legend.currentColor % len(Legend.colorCycles)]
+            self.color = Legend.colorCycles[Legend.currentColor
+                                            % len(Legend.colorCycles)]
         Legend.currentColor += 1
 
 
@@ -25,11 +28,11 @@ class ParameterModel(QtCore.QAbstractListModel):
     texRole = QtCore.Qt.UserRole + 1000 + 1
     selectedRole = QtCore.Qt.UserRole + 1000 + 2
 
-    def __init__(self, parent=None, sample=None):
+    def __init__(self, parent=None, columns=None, tex = None):
         super(ParameterModel, self).__init__(parent)
-        self.names = sample.columns
-        print('created')
-        self.displayNames = set(sample.columns[:3])
+        self.names = columns
+        self.tex = tex
+        self.displayNames = set(columns[:3])
 
     def roleNames(self):
         roles = {
@@ -61,8 +64,9 @@ class ParameterModel(QtCore.QAbstractListModel):
 
 
 class SamplesModel(QtCore.QAbstractListModel):
-    fullRepaint = QtCore.Signal(object, object, object)
+    fullRepaint = QtCore.Signal(object, object)
     notify = QtCore.Signal(str)
+    newParams = QtCore.Signal(object, object)
 
     nameRole = QtCore.Qt.UserRole + 1000 + 0
     urlRole = QtCore.Qt.UserRole + 1000 + 1
@@ -70,7 +74,6 @@ class SamplesModel(QtCore.QAbstractListModel):
     displayRole = QtCore.Qt.UserRole + 1000 + 3
     legendColorRole = QtCore.Qt.UserRole + 1000 + 4
     samplesTypeRole = QtCore.Qt.UserRole + 1000 + 5
-    parametersModel = QtCore.Qt.UserRole + 1000 + 6
 
     def roleNames(self):
         roles = {
@@ -80,7 +83,6 @@ class SamplesModel(QtCore.QAbstractListModel):
             SamplesModel.legendColorRole: b'legend_color',
             SamplesModel.samplesTypeRole: b'samples_type',
             SamplesModel.displayRole: b'display',
-            SamplesModel.parametersModel: b'parameters_model'
         }
         return roles
 
@@ -116,8 +118,6 @@ class SamplesModel(QtCore.QAbstractListModel):
                     return 'NestedSamples'
                 if isinstance(item, MCMCSamples):
                     return 'MCMCSamples'
-            if role == SamplesModel.parametersModel:
-                return self.parameters[self.names[index.row()]]
 
     @QtCore.Slot(str)
     def appendRow(self, file_root, *args):
@@ -133,8 +133,7 @@ class SamplesModel(QtCore.QAbstractListModel):
             self.names.append(basename(rt))
             self.legends[basename(rt)] = Legend(basename(rt))
             self.samples[basename(rt)] = samples
-            self.parameters[basename(rt)] = ParameterModel(self, self.samples[basename(rt)])
-            print(self.parameters)
+            self.newParams.emit(samples.columns, samples.tex)
             self.displayed_names.add(basename(rt))
             self.endInsertRows()
 
@@ -149,16 +148,8 @@ class SamplesModel(QtCore.QAbstractListModel):
                QtCore.Qt.ItemIsSelectable
 
     def reqRepaint(self):
-        a, b = self.parameters.popitem()
-        displayed_params = b.displayNames
-        for k in self.parameters:
-            displayed_params = displayed_params.intersection(self.parameters[k].displayNames)
-        # This isn't the first time. You'll see this stupid pattern again.
-        self.parameters[a] = b
-
         self.fullRepaint.emit({k: self.samples[k] for k in self.displayed_names},
-                              {k: self.legends[k] for k in self.displayed_names},
-                              list(displayed_params))
+                              {k: self.legends[k] for k in self.displayed_names})
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == SamplesModel.legendNameRole:
