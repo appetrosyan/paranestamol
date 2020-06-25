@@ -6,12 +6,18 @@ keep the QML model in sync with the Python back end.
 from matplotlib_backend_qtquick.qt_compat import QtCore
 from anesthetic.samples import NestedSamples, MCMCSamples
 from os.path import splitext, basename
-
+import matplotlib.pyplot as plt
 
 class Legend:
-    def __init__(self, title='', color='#ff0000'):
+    colorCycles = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    currentColor = 0
+    def __init__(self, title='', color=None):
         self.title = title
-        self.color = color  # Let's be international.
+        if color is not None:
+            self.color = color  # Let's be international.
+        else:
+            self.color = Legend.colorCycles[Legend.currentColor % len(Legend.colorCycles)]
+        Legend.currentColor += 1
 
 
 class ParameterModel(QtCore.QAbstractListModel):
