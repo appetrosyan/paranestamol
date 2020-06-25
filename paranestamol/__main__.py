@@ -6,9 +6,7 @@ import sys
 from pathlib import Path
 from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
 from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore
-from anesthetic.plot import make_2d_axes
-from .samples_model import SamplesModel
-import matplotlib.pyplot as plt
+from .samples_model import SamplesModel, ParameterModel
 from .plt_managers import TrianglePlotter
 
 
@@ -17,14 +15,24 @@ def main():
     sys.argv += ['--style', 'material']
     app = QtGui.QGuiApplication(sys.argv)
     engine = QtQml.QQmlApplicationEngine()
-    displayBridge = TrianglePlotter()
+
     context = engine.rootContext()
-    context.setContextProperty("displayBridge", displayBridge)
-    context.setContextProperty('paramsModel', displayBridge._paramsModel)
+    displayBridge = TrianglePlotter()
+    paramModel = ParameterModel()
     samplesModel = SamplesModel()
+    # thread = QtCore.QThread()
+    # thread.start()
+    # samplesModel.moveToThread(thread)
+    displayBridge.paramsModel = paramModel
+    # displayBridge.moveToThread(thread)
+
     samplesModel.fullRepaint.connect(displayBridge.reDraw)
-    samplesModel.newParams.connect(displayBridge.updateParams)
+    samplesModel.newParams.connect(paramModel.addParams)
+
+    context.setContextProperty("displayBridge", displayBridge)
+    context.setContextProperty('paramsModel', paramModel)
     context.setContextProperty("samplesModel", samplesModel)
+
     QtQml.qmlRegisterType(FigureCanvasQtQuickAgg,
                           "Backend", 1, 0, "FigureCanvas")
     qmlFile = Path(Path.cwd(), Path(__file__).parent, "view.qml")
@@ -32,13 +40,14 @@ def main():
     win = engine.rootObjects()[0]
     displayBridge.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
-    
 
     displayBridge.canvas = win.findChild(QtCore.QObject, "trianglePlot")
     displayBridge.figure = displayBridge.canvas.figure
     temperatureSlider = win.findChild(QtCore.QObject, "temperature_slider")
-    temperatureSlider.valueChangeFinished.connect(displayBridge.changeTemperature)
-    temperatureSlider.valueChangeStarted.connect(displayBridge.changeTemperature)
+    temperatureSlider.valueChangeFinished\
+                     .connect(displayBridge.changeTemperature)
+    temperatureSlider.valueChangeStarted\
+                     .connect(displayBridge.changeTemperature)
     loglSlider = win.findChild(QtCore.QObject, "logl_slider")
     loglSlider.valueChangeStarted.connect(displayBridge.changeLogL)
     app.exec_()

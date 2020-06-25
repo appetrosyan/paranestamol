@@ -11,12 +11,13 @@ import Backend 1.0
 import "utils.js" as Utils
 
 ApplicationWindow {
+	id: mainWindow
 	visible: true
 	title: mainView.currentItem.title
 	width: 800
-	minimumWidth: mainView.currentItem.implicitWidth
+	minimumWidth: 400
 	height: 600
-	minimumHeight: mainView.currentItem.implicitHeight
+	minimumHeight: 200
 	Material.theme: Material.Dark
 	Material.accent: Material.Orange
 	ListModel{
@@ -36,6 +37,7 @@ ApplicationWindow {
 		}
 	}
 	header: ToolBar{
+		visible: mainWindow.height > 400
 		ToolButton {
 			visible: mainView.itemAt(mainView.currentIndex-1)
 			text: visible?mainView.itemAt(mainView.currentIndex-1).title:''
@@ -125,47 +127,51 @@ ApplicationWindow {
 				height: 50
 				text: '⋮'
 				onClicked: {
-					legendPopup.visible = true
-					console.log(paramsModel)
+					paramsPopup.visible = true
 				}
-				Popup {
-					id: legendPopup
-					width: 300
-					height: 300
-					ListView {
-						id: outerView
+				Popup{
+					id: paramsPopup
+					width: 200
+					height: 400
+					ListView{
+						id: paramView
 						model: paramsModel
-						delegate: Component  {
+						anchors.fill: parent 
+						delegate: Component{
 							Item{
 								height: childrenRect.height
-								width: parent.width
-								Text{
+								width: paramView.width
+								CheckBox{
+									id: selectedBox
+									checked: model.selected
+									anchors.left: parent.left
+									anchors.verticalCenter: parent.verticalCenter
+								}
+								Text {
+									anchors.left: selectedBox.right
+									anchors.right: parent.right
+									anchors.verticalCenter: parent.verticalCenter
 									text: model.name
 									color: Material.foreground
 								}
 							}
 						}
-						anchors.fill: parent 
+						ScrollIndicator.vertical: ScrollIndicator{
+							parent: paramView.parent
+							anchors.top: paramView.top
+							anchors.bottom: paramView.bottom
+							anchors.right: paramView.right
+						}
+						clip: true
 					}
-					
 				}
 			}
-		
 		}
-	}
-
-	Popup{
-		x: parent.width - 308
-		y: parent.height - 200
-		width: 300
-		height: 150
-		visible: true
-		transformOrigin: Popup.BottomRight
 	}
 	
 	footer: Text{
 		id: statusBar
-		text: "placeholder"
+		text: "Status"
 		
 		color: Material.foreground
 		font.bold: true

@@ -2,7 +2,7 @@ from matplotlib_backend_qtquick.qt_compat import QtCore
 import matplotlib.pyplot as plt
 from anesthetic import make_2d_axes
 import numpy as np
-from .samples_model import ParameterModel
+from .samples_model import ParameterModel, Legend
 
 
 
@@ -17,24 +17,23 @@ class TrianglePlotter(QtCore.QObject):
         self.beta = 0
         self.logL = -10000
         self.canvas = None
-        # self.axes = None
         self._sample = None
+        self.legends = {}
         self.samples = dict()
-        self.params = []
-        self._paramsModel = None
+        self.paramsModel = None
 
-    @QtCore.Slot(object, object)
-    def updateParams(self, columns, tex):
-        print('updating params')
-        self._paramsModel = ParameterModel(self, columns, tex)
-        self.params = list(self._paramsModel.displayNames)
-        self.paramsChanged.emit()
+    @property
+    def params(self):
+        return list(self.paramsModel.displayNames)
+
+    @property
+    def tex(self):
+        return self.paramsModel.tex
 
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
         self.logL = logL
-        print(logL)
-        fig = updateTrianglePlot(self, plt.figure(), logL = 10*logL)
+        fig = updateTrianglePlot(self, plt.figure())
         self.canvas.figure = fig
         fig.set_canvas(self.canvas)
         self.canvas.draw_idle()
@@ -42,24 +41,24 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
-        for k in self.samples:
-            self.samples.beta = beta
         fig = updateTrianglePlot(self, plt.figure())
         self.canvas.figure = fig
         fig.set_canvas(self.canvas)
         self.canvas.draw_idle()
 
+    @QtCore.Slot()
+    @QtCore.Slot(object)
     @QtCore.Slot(object, object)
-    @QtCore.Slot(object, object, object)
-    def reDraw(self, samples=None, legends=None, params=None, *args):
+    def reDraw(self, samples=None, legends=None, *args):
         print('repainting')
         if samples:
             self.samples = samples
-        if legends:
+        if legends is None:
+            if self.legends is None:
+                for k in self.samples:
+                    self.legends[k] = Legend(title=k)
+        else:
             self.legends = legends
-        if params is not None:
-            self.params = params
-        print(self.params)
         self.notify.emit('Full repaint...')
         updateTrianglePlot(self, self.canvas.figure)
         self.notify.emit('Fully repainted.')
@@ -68,9 +67,10 @@ class TrianglePlotter(QtCore.QObject):
 
 def updateTrianglePlot(bridge, figure, logL=None):
     figure.clear()
-    figure, axes = make_2d_axes(bridge.params, fig=figure)
+    figure, axes = make_2d_axes(bridge.params, tex=bridge.tex, fig=figure)
     for x in bridge.samples:
-        bridge.samples[x].plot_2d(axes, alpha=0.7,
+        bridge.samples[x].live_points(bridge.logL)\
+                         .plot_2d(axes, alpha=0.7,
                                   color=bridge.legends[x].color,
                                   label=bridge.legends[x].title)
     handles, labels = axes[bridge.params[0]][bridge.params[1]]\

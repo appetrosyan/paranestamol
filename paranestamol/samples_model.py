@@ -28,24 +28,24 @@ class ParameterModel(QtCore.QAbstractListModel):
     texRole = QtCore.Qt.UserRole + 1000 + 1
     selectedRole = QtCore.Qt.UserRole + 1000 + 2
 
-    def __init__(self, parent=None, columns=None, tex = None):
+    def __init__(self, parent=None, columns=[], tex={}):
         super(ParameterModel, self).__init__(parent)
         self.names = columns
         self.tex = tex
-        self.displayNames = set(columns[:3])
+        self.displayNames = {}
 
     def roleNames(self):
         roles = {
             ParameterModel.nameRole: b'name',
             ParameterModel.texRole: b'tex',
-            ParameterModel.selectedRole: b'selected'
+            ParameterModel.selectedRole: b'selected',
         }
         return roles
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
             return 0
-        return len(self.params)
+        return len(self.names)
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
@@ -61,6 +61,41 @@ class ParameterModel(QtCore.QAbstractListModel):
     @QtCore.Slot(str, str, bool)
     def appendRow(self, name, tex=None, show=False):
         self.names.add(name)
+
+    @QtCore.Slot(object, object)
+    def addParams(self, params, tex):
+        self.beginResetModel()
+        if self.names == []:
+            self.names = params
+        else:
+            self.names.intersection([params])
+            self.tex = {}
+        for name in self.names:
+            self.tex[name] = tex[name]
+        if self.displayNames == {}:
+            self.displayNames = set(self.names[:3])
+        self.endResetModel()
+
+    def flags(self, index):
+        return QtCore.Qt.ItemIsEditable | \
+               QtCore.Qt.ItemIsEnabled | \
+               QtCore.Qt.ItemIsSelectable
+
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        if role == ParameterModel.texRole:
+            self.tex[self.names[index.row()]]=value
+        elif role == ParameterModel.selectedRole:
+            name = self.names[index.row()]
+            if name in self.displayNames and value or name not in self.displayNames and not value:
+                return False
+            else:
+                if value:
+                    self.displayNames.add(name)
+                else:
+                    self.displayNames.remove(name)
+                return True
+        else:
+            return False
 
 
 class SamplesModel(QtCore.QAbstractListModel):
@@ -91,7 +126,8 @@ class SamplesModel(QtCore.QAbstractListModel):
             return 0
         if len(self.names) != len(self.samples):
             raise ValueError(
-                f"Number of samples {len(self.names)} must match number of samples_names {len(self.samples)}.")
+                "len(samples) {} and len(samples_names) {}, mismatch."
+                .format(len(self.names), len(self.samples)))
         return len(self.samples)
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
@@ -148,8 +184,9 @@ class SamplesModel(QtCore.QAbstractListModel):
                QtCore.Qt.ItemIsSelectable
 
     def reqRepaint(self):
-        self.fullRepaint.emit({k: self.samples[k] for k in self.displayed_names},
-                              {k: self.legends[k] for k in self.displayed_names})
+        samples = {k: self.samples[k] for k in self.displayed_names}
+        legends = {k: self.legends[k] for k in self.displayed_names}
+        self.fullRepaint.emit(samples, legends)
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == SamplesModel.legendNameRole:
@@ -174,19 +211,20 @@ class SamplesModel(QtCore.QAbstractListModel):
                     self.displayed_names.remove(name)
                 self.reqRepaint()
                 return True
-        return False
+        else:
+            return False
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, names=[], samples={}):
         super(SamplesModel, self).__init__(parent)
-        self.names = []
-        self.samples = {}
+        self.names = names
+        self.samples = samples
         self.legends = {}
         self.displayed_names = set()
         self.parameters = {}
 
 
 def cleanupFileRoot(file_root):
-    ret =file_root.replace('file://', '', 1)
+    ret = file_root.replace('file://', '', 1)
     exts = ['.stats', '.resume', '.paramnames', '.inputparams', '.ranges']
     # Make sure to put the substrings later, so that the longer part can be picked up.
     ends = ['_equal_weights', '_dead-birth', '_dead','_phys_live-birth',  '_phys_live']
@@ -200,4 +238,4 @@ def cleanupFileRoot(file_root):
                 rt, end = root.rsplit(end, 1)
                 return rt, end+ext
             except ValueError:
-                pass 
+                pass
