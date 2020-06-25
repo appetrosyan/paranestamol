@@ -33,6 +33,11 @@ def main():
 
     displayBridge.canvas = win.findChild(QtCore.QObject, "trianglePlot")
     displayBridge.figure = displayBridge.canvas.figure
+    temperatureSlider = win.findChild(QtCore.QObject, "temperature_slider")
+    temperatureSlider.valueChangeFinished.connect(displayBridge.changeTemperature)
+    temperatureSlider.valueChangeStarted.connect(displayBridge.changeTemperature)
+    loglSlider = win.findChild(QtCore.QObject, "logl_slider")
+    loglSlider.valueChangeStarted.connect(displayBridge.changeLogL)
     app.exec_()
 
 

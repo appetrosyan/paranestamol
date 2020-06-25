@@ -27,7 +27,7 @@ Item{
 		placeholderText: qsTr("Path to samples `file_root`")
 		onTextChanged: {
 			text= text.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"")
-			var cleanPath = decodeURIComponent(path)
+			var cleanPath = decodeURIComponent(text)
 			fileName = cleanPath
 		}
 	}

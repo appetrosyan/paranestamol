@@ -29,6 +29,7 @@ class TrianglePlotter(QtCore.QObject):
         fig.set_canvas(self.canvas)
         self.canvas.draw_idle()
 
+    @QtCore.Slot(int)
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
@@ -64,7 +65,8 @@ def updateTrianglePlot(bridge, figure, logL=None):
         bridge.samples[x].plot_2d(axes, alpha=0.7,
                                   color=bridge.legends[x].color,
                                   label=bridge.legends[x].title)
-    handles, labels = axes[bridge.params[0]][bridge.params[1]]\
-        .get_legend_handles_labels()
-    figure.legend(handles, labels)
+    if bridge.params != []:
+        handles, labels = axes[bridge.params[0]][bridge.params[1]]\
+            .get_legend_handles_labels()
+        figure.legend(handles, labels)
     return figure

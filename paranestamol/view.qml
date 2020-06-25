@@ -111,9 +111,7 @@ ApplicationWindow {
 				from: 0
 				to: 100
 				stepSize: 1
-				onValueChangeStarted: {
-					displayBridge.changeTemperature(this.value)
-				}
+				objectName: 'temperature_slider'
 				text: 'beta'
 				orientation: Qt.Vertical
 				width: 60
@@ -125,9 +123,7 @@ ApplicationWindow {
 				id: logL
 				from: -100
 				to: -1
-				onValueChangeStarted: {
-					displayBridge.changeLogL(this.value)
-				}
+				objectName: 'logl_slider'
 				text: 'logL'
 				anchors.left: mplView.left
 				anchors.top: mplView.bottom

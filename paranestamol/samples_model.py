@@ -13,6 +13,46 @@ class Legend:
         self.title = title
         self.color = color  # Let's be international.
 
+class ParameterModel(QtCore.QAbstractListModel):
+    nameRole = QtCore.Qt.UserRole + 1000 + 0
+    texRole = QtCore.Qt.UserRole + 1000 + 1
+    selectedRole = QtCore.Qt.UserRole + 1000 + 2
+
+    def __init__(self, parent=None):
+        super(ParameterModel,self).__init__(parent)
+        self.names = {}
+        self.params = {}
+
+    def roleNames(self):
+        roles = {
+            ParameterModel.nameRole: b'name',
+            ParameterModel.texRole: b'tex',
+            ParameterModel.selectedRole: b'selected'
+        }
+
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        if parent.isValid():
+            return 0
+        return len(self.params)
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if 0<= index.row() < self.rowCount() and index.isValid():
+            if role == ParameterModel.nameRole:
+                return self.names[index.row()]
+            show, tex = self.params[self.names[index.row()]]
+            if role == ParameterModel.texRole:
+                return tex
+            if role == ParameterModel.selectedRole:
+                return show
+
+    @QtCore.Slot(str)
+    @QtCore.Slot(str, str)
+    @QtCore.Slot(str, str, bool)
+    def appendRow(name, tex=None, show=False):
+        self.names.add(name)
+        self.params[name]=(show, tex)
+
+    
 
 class SamplesModel(QtCore.QAbstractListModel):
     fullRepaint = QtCore.Signal(object, object)
@@ -69,26 +109,30 @@ class SamplesModel(QtCore.QAbstractListModel):
                 if isinstance(item, MCMCSamples):
                     return 'MCMCSamples'
 
+          
+        
+
     @QtCore.Slot(str)
     def appendRow(self, file_root, *args):
-        rt, _ = splitext(file_root)
+        rt, _ = cleanupFileRoot(file_root)
         self.notify.emit('Loading...')
         if basename(rt) not in self.names:
+
             self.beginInsertRows(QtCore.QModelIndex(),
                                  self.rowCount(), self.rowCount())
             samples = NestedSamples(root=rt)
-            if samples is not None:
-                self.names.append(basename(rt))
-                self.legends[basename(rt)] = Legend(basename(rt))
-                self.samples[basename(rt)] = samples
-                self.displayed_names.add(basename(rt))
+            if samples is None:
+                raise ValueError('Samples were None')
+            self.names.append(basename(rt))
+            self.legends[basename(rt)] = Legend(basename(rt))
+            self.samples[basename(rt)] = samples
+            self.displayed_names.add(basename(rt))
             self.endInsertRows()
+
             self.reqRepaint()
             self.notify.emit('Loaded.')
         else:
-            self.notify.emit(f'Samples named: {basename(rt)} - already loaded.')
-            raise KeyError(
-                f'samples named \'{basename(rt)}\' already present.')
+            self.notify.emit(f'Samples: {basename(rt)} - already loaded.')
 
     def flags(self, index):
         return QtCore.Qt.ItemIsEditable | \
@@ -126,8 +170,25 @@ class SamplesModel(QtCore.QAbstractListModel):
 
     def __init__(self, parent=None):
         super(SamplesModel, self).__init__(parent)
-        self.notify.emit('Python is degisned by morons. Pyside2 is very pythonic indeed. ')
         self.names = []
         self.samples = {}
         self.legends = {}
         self.displayed_names = set()
+
+
+def cleanupFileRoot(file_root):
+    ret =file_root.replace('file://', '', 1)
+    exts = ['.stats', '.resume', '.paramnames', '.inputparams', '.ranges']
+    # Make sure to put the substrings later, so that the longer part can be picked up.
+    ends = ['_equal_weights', '_dead-birth', '_dead','_phys_live-birth',  '_phys_live']
+    root, ext = splitext(ret)
+    print(f'{root}, {ext}')
+    if ext in exts:
+        return root, ext
+    elif ext == 'txt':
+        for end in ends:
+            try:
+                rt, end = root.rsplit(end, 1)
+                return rt, end+ext
+            except ValueError:
+                pass  
