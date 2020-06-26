@@ -31,7 +31,9 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
         self.logL = logL
-        fig = updateTrianglePlot(self, plt.figure())
+        fig = updateTrianglePlot(plt.figure(),
+                                 self.params, self.tex,
+                                 self.samples, self.legends, self.logL)
         self.canvas.figure = fig
         fig.set_canvas(self.canvas)
         self.canvas.draw_idle()
@@ -39,7 +41,9 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
-        fig = updateTrianglePlot(self, plt.figure())
+        fig = updateTrianglePlot(plt.figure(),
+                                 self.params, self.tex,
+                                 self.samples, self.legends, self.logL)
         self.canvas.figure = fig
         fig.set_canvas(self.canvas)
         self.canvas.draw_idle()
@@ -56,8 +60,10 @@ class TrianglePlotter(QtCore.QObject):
                     self.legends[k] = Legend(title=k)
         else:
             self.legends = legends
-        self.notify.emit('Full repaint...')
-        updateTrianglePlot(self, self.canvas.figure)
+        self.notify.emit('Full synchronous repaint...')
+        updateTrianglePlot(self.canvas.figure,
+                           self.params, self.tex,
+                           self.samples, self.legends, self.logL)
         self.notify.emit('Fully repainted.')
         self.canvas.draw_idle()
 
