@@ -109,8 +109,9 @@ class ScreenPainter(QtCore.QThread):
         args = (self.figure, self.params, self.tex,
                 self.samples, self.legends, self.logL,
                 self.beta)
-        with Pool(1) as p:
-            fig = p.starmap(updateTrianglePlot, [args])
-        fig = fig[0]
+        # with Pool(1) as p:
+            # fig = p.starmap(updateTrianglePlot, [args])
+        # fig = fig[0]
+        fig = updateTrianglePlot(*args)
         self.done.emit(fig)
         self.quit()
