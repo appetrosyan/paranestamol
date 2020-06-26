@@ -2,7 +2,6 @@
 keep the QML model in sync with the Python back end.
 
 """
-
 from matplotlib_backend_qtquick.qt_compat import QtCore
 from anesthetic.samples import NestedSamples, MCMCSamples
 from os.path import splitext, basename
@@ -31,7 +30,7 @@ class Legend:
         @color.setter
         def color_(self, color):
             if isinstance(color, str):
-                if len(color>7):
+                if len(color > 7):
                     self._color = '#{}'.format(color[3:])
                     self.alpha = int(color[1:3], 16)/int("ff", 16)
 
