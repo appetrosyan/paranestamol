@@ -1,6 +1,6 @@
 from matplotlib_backend_qtquick.qt_compat import QtCore
 import matplotlib.pyplot as plt
-from multiprocessing import Process
+from multiprocessing import Pool
 from anesthetic import make_2d_axes
 from .samples_model import Legend
 
@@ -106,10 +106,11 @@ class ScreenPainter(QtCore.QThread):
         self.beta = beta
 
     def run(self):
-        fig = updateTrianglePlot(self.figure, self.params, self.tex,
-                                 self.samples, self.legends, self.logL,
-                                 self.beta)
+        args = (self.figure, self.params, self.tex,
+                self.samples, self.legends, self.logL,
+                self.beta)
+        with Pool(1) as p:
+            fig = p.starmap(updateTrianglePlot, [args])
+        fig = fig[0]
         self.done.emit(fig)
         self.quit()
-
-
