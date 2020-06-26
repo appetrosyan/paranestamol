@@ -101,12 +101,13 @@ Item{
 							anchors.fill: parent
 							signal updaColor()
 							onUpdaColor:{
-								console.log(colorBrowse.color)
 								model.legend_color = colorBrowse.color
 							}
 							onClicked: {
 								fileView.currentIndex = index
 								colorBrowse.visible = true
+								colorBrowse.color = model.legend_color
+								colorBrowse.color.a = model.legend_alpha
 								colorBrowse.accepted.connect(this.updaColor)
 							}
 							
