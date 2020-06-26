@@ -171,12 +171,11 @@ ApplicationWindow {
 			}
 		}
 	}
-	
 	footer: Text{
 		id: statusBar
 		text: "Status"
-		
 		color: Material.foreground
 		font.bold: true
 	}
 }
+

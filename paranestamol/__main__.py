@@ -20,11 +20,7 @@ def main():
     displayBridge = TrianglePlotter()
     paramModel = ParameterModel()
     samplesModel = SamplesModel()
-    # thread = QtCore.QThread()
-    # thread.start()
-    # samplesModel.moveToThread(thread)
     displayBridge.paramsModel = paramModel
-    # displayBridge.moveToThread(thread)
 
     samplesModel.fullRepaint.connect(displayBridge.reDraw)
     samplesModel.newParams.connect(paramModel.addParams)

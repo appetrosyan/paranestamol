@@ -62,17 +62,16 @@ class TrianglePlotter(QtCore.QObject):
         self.canvas.draw_idle()
 
 
-def updateTrianglePlot(bridge, figure, logL=None):
+def updateTrianglePlot(figure, params, tex, samples, legends, logL):
     figure.clear()
-    print(bridge.params)
-    figure, axes = make_2d_axes(bridge.params, tex=bridge.tex, fig=figure)
-    for x in bridge.samples:
-        bridge.samples[x].live_points(bridge.logL)\
-                         .plot_2d(axes,
-                                  alpha=bridge.legends[x].alpha,
-                                  color=bridge.legends[x].color,
-                                  label=bridge.legends[x].title)
-    handles, labels = axes[bridge.params[0]][bridge.params[1]]\
+    figure, axes = make_2d_axes(params, tex=tex, fig=figure)
+    for x in samples:
+        samples[x].live_points(logL)\
+                  .plot_2d(axes,
+                           alpha=legends[x].alpha,
+                           color=legends[x].color,
+                           label=legends[x].title)
+    handles, labels = axes[params[0]][params[1]]\
         .get_legend_handles_labels()
     figure.legend(handles, labels)
     return figure
