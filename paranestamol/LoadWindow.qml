@@ -14,6 +14,7 @@ Item{
 		id: colorBrowse
 		title: qsTr("Please select legend color")
 		visible: false
+		showAlphaChannel: true
 	}
 	height: 200
 	TextField{
@@ -84,12 +85,13 @@ Item{
 						id: display
 						checked: model.display
 						onClicked: {
-							console.log("Clicked")
+							model.display = !model.display
 						}
 					}
 					Rectangle{
 						id: legendColor
 						color: model.legend_color
+						opacity: model.legend_alpha
 						anchors.left: display.right
 						anchors.top: parent.top
 						anchors.topMargin: 14
@@ -143,6 +145,20 @@ Item{
 						rightPadding: 8
 						horizontalAlignment: Text.AlignRight
 						elide: Text.ElideRight
+					}
+					Text {
+						id: statLine
+						anchors.top: pathLine.bottom
+						anchors.left: parent.left
+						anchors.right: parent.right
+						color: Material.foreground
+						text: 'logZ: %1, D: %2, BMD: %3'.arg(model.logZ)
+							.arg(model.Dkl).arg(model.bmd)
+						bottomPadding: 5
+						topPadding: 5
+						leftPadding: 5
+						rightPadding: 5
+						horizontalAlignment: Text.AlignCenter
 					}
 				}
 			}

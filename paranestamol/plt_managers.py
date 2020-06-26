@@ -1,9 +1,7 @@
 from matplotlib_backend_qtquick.qt_compat import QtCore
 import matplotlib.pyplot as plt
 from anesthetic import make_2d_axes
-import numpy as np
-from .samples_model import ParameterModel, Legend
-
+from .samples_model import Legend
 
 
 class TrianglePlotter(QtCore.QObject):
@@ -50,7 +48,6 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(object)
     @QtCore.Slot(object, object)
     def reDraw(self, samples=None, legends=None, *args):
-        print('repainting')
         if samples:
             self.samples = samples
         if legends is None:
@@ -70,7 +67,8 @@ def updateTrianglePlot(bridge, figure, logL=None):
     figure, axes = make_2d_axes(bridge.params, tex=bridge.tex, fig=figure)
     for x in bridge.samples:
         bridge.samples[x].live_points(bridge.logL)\
-                         .plot_2d(axes, alpha=0.7,
+                         .plot_2d(axes,
+                                  alpha=bridge.legends[x].alpha,
                                   color=bridge.legends[x].color,
                                   label=bridge.legends[x].title)
     handles, labels = axes[bridge.params[0]][bridge.params[1]]\

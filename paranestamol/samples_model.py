@@ -13,14 +13,27 @@ class Legend:
     colorCycles = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     currentColor = 0
 
-    def __init__(self, title='', color=None):
+    def __init__(self, title='', color=None, alpha=None):
         self.title = title
         if color is not None:
             self.color = color  # Let's be international.
         else:
             self.color = Legend.colorCycles[Legend.currentColor
                                             % len(Legend.colorCycles)]
+        if alpha is None:
+            self.alpha = 1
         Legend.currentColor += 1
+
+        @property
+        def color(self):
+            return self._color
+
+        @color.setter
+        def color_(self, color):
+            if isinstance(color, str):
+                if len(color>7):
+                    self._color = '#{}'.format(color[3:])
+                    self.alpha = int(color[1:3], 16)/int("ff", 16)
 
 
 class ParameterModel(QtCore.QAbstractListModel):
@@ -84,6 +97,8 @@ class ParameterModel(QtCore.QAbstractListModel):
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == ParameterModel.texRole:
             self.tex[self.names[index.row()]]=value
+            self.dataChanged.emit(index,index)
+            return True
         elif role == ParameterModel.selectedRole:
             name = self.names[index.row()]
             if name in self.displayNames and value or name not in self.displayNames and not value:
@@ -93,6 +108,7 @@ class ParameterModel(QtCore.QAbstractListModel):
                     self.displayNames.add(name)
                 else:
                     self.displayNames.remove(name)
+                self.dataChanged.emit(index, index)
                 return True
         else:
             return False
@@ -109,6 +125,10 @@ class SamplesModel(QtCore.QAbstractListModel):
     displayRole = QtCore.Qt.UserRole + 1000 + 3
     legendColorRole = QtCore.Qt.UserRole + 1000 + 4
     samplesTypeRole = QtCore.Qt.UserRole + 1000 + 5
+    legendAlphaRole = QtCore.Qt.UserRole + 1000 + 6
+    logZRole = QtCore.Qt.UserRole + 1000 + 7
+    dklRole = QtCore.Qt.UserRole + 1000 + 8
+    bmdRole = QtCore.Qt.UserRole + 1000 + 9
 
     def roleNames(self):
         roles = {
@@ -118,6 +138,10 @@ class SamplesModel(QtCore.QAbstractListModel):
             SamplesModel.legendColorRole: b'legend_color',
             SamplesModel.samplesTypeRole: b'samples_type',
             SamplesModel.displayRole: b'display',
+            SamplesModel.legendAlphaRole: b'legend_alpha',
+            SamplesModel.logZRole: b'logZ',
+            SamplesModel.dklRole: b'Dkl',
+            SamplesModel.bmdRole: b'bmd',
         }
         return roles
 
@@ -154,6 +178,15 @@ class SamplesModel(QtCore.QAbstractListModel):
                     return 'NestedSamples'
                 if isinstance(item, MCMCSamples):
                     return 'MCMCSamples'
+            if role == SamplesModel.legendAlphaRole:
+                return self.legends[self.names[index.row()]].alpha
+
+            if role == SamplesModel.bmdRole:
+                return float(self.samples[self.names[index.row()]].d())
+            if role == SamplesModel.dklRole:
+                return float(self.samples[self.names[index.row()]].D())
+            if role == SamplesModel.logZRole:
+                return float(self.samples[self.names[index.row()]].logZ())
 
     @QtCore.Slot(str)
     def appendRow(self, file_root, *args):
@@ -196,6 +229,12 @@ class SamplesModel(QtCore.QAbstractListModel):
             return True
         if role == SamplesModel.legendColorRole:
             self.legends[self.names[index.row()]].color = value.name()
+            self.legends[self.names[index.row()]].alpha = value.alphaF()
+            self.dataChanged.emit(index, index)
+            self.reqRepaint()
+            return True
+        if role == SamplesModel.legendAlphaRole:
+            self.legends[self.names[index.row()]].alpha = value
             self.dataChanged.emit(index, index)
             self.reqRepaint()
             return True
@@ -229,7 +268,6 @@ def cleanupFileRoot(file_root):
     # Make sure to put the substrings later, so that the longer part can be picked up.
     ends = ['_equal_weights', '_dead-birth', '_dead','_phys_live-birth',  '_phys_live']
     root, ext = splitext(ret)
-    print(f'{root}, {ext}')
     if ext in exts:
         return root, ext
     elif ext == '.txt':
