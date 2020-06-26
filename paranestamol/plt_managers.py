@@ -64,6 +64,7 @@ class TrianglePlotter(QtCore.QObject):
 
 def updateTrianglePlot(bridge, figure, logL=None):
     figure.clear()
+    print(bridge.params)
     figure, axes = make_2d_axes(bridge.params, tex=bridge.tex, fig=figure)
     for x in bridge.samples:
         bridge.samples[x].live_points(bridge.logL)\

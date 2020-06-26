@@ -139,13 +139,16 @@ ApplicationWindow {
 						anchors.fill: parent 
 						delegate: Component{
 							Item{
-								height: childrenRect.height
+								height: 80
 								width: paramView.width
 								CheckBox{
 									id: selectedBox
 									checked: model.selected
 									anchors.left: parent.left
 									anchors.verticalCenter: parent.verticalCenter
+									onClicked: {
+										model.selected = !model.selected
+									}
 								}
 								Text {
 									anchors.left: selectedBox.right
