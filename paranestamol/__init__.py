@@ -1,1 +1,1 @@
-import Pyside2.QtCore
+import PySide2.QtCore
