@@ -70,7 +70,10 @@ def updateTrianglePlot(figure, params, tex, samples, legends, logL):
                   .plot_2d(axes,
                            alpha=legends[x].alpha,
                            color=legends[x].color,
-                           label=legends[x].title)
+                           label=legends[x].title,
+                           types(
+                               {'lower':'scatter',
+                                'diagonal': 'histogram'}))
     handles, labels = axes[params[0]][params[1]]\
         .get_legend_handles_labels()
     figure.legend(handles, labels)
