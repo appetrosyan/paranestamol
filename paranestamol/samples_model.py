@@ -95,12 +95,13 @@ class ParameterModel(QtCore.QAbstractListModel):
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == ParameterModel.texRole:
-            self.tex[self.names[index.row()]]=value
-            self.dataChanged.emit(index,index)
+            self.tex[self.names[index.row()]] = value
+            self.dataChanged.emit(index, index)
             return True
         elif role == ParameterModel.selectedRole:
             name = self.names[index.row()]
-            if name in self.displayNames and value or name not in self.displayNames and not value:
+            if name in self.displayNames and value \
+               or name not in self.displayNames and not value:
                 return False
             else:
                 if value:

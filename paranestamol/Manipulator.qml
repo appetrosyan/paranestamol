@@ -12,6 +12,8 @@ Item{
 	property alias orientation: slider.orientation
 	property alias stepSize: slider.stepSize
 	property alias value: currentValue.value
+	property var trans: a => a
+	property var invtrans: a=>a
 	Item{
 		id: info
 		width: Math.max(marker.width, currentValue.width)
@@ -25,25 +27,20 @@ Item{
 		}
 		TextInput{
 			id: currentValue
-			text: slider.value
+			text: "%1".arg(Math.round(trans(slider.value)))
 			font.bold: !focus
 			color: focus?Material.accent:Qt.darker(Material.accent)
-			property var value: slider.value
+			property var value: trans(slider.value)
 			anchors.topMargin: 20
-			/* color: Material.foreground */
 			anchors.top: marker.bottom
 			anchors.horizontalCenter: parent.horizontalCenter
 			anchors.bottom: parent.bottom
 			onTextChanged: {
-				valueChangeStarted(currentValue.value)
-				/* this.color = Material.accent */
+				valueChangeStarted(parseInt(text))
 			}
 			onAccepted: {
-				console.log(text)
-				console.log(parseFloat(text))
-				slider.value = parseFloat(text)
-				valueChangeFinished(slider.value)
-				/* this.color=Material.foreground */
+				slider.value = invtrans(parseFloat(text))
+				valueChangeFinished(parseInt(text))
 			}
 		}
 		Component.onCompleted: {
@@ -67,7 +64,7 @@ Item{
 	}
 	Slider{
 		id: slider
-		live: false
+		live: true
 		from: 0
 		to: 100
 		orientation: Qt.Horizontal

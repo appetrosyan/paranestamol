@@ -90,19 +90,20 @@ ApplicationWindow {
 				id: mplView
 				anchors.left: parent.left
 				anchors.leftMargin: 8
-				anchors.right: temperature.left
 				anchors.top: parent.top
 				implicitWidth: 700
-				height: 500
+				height: 400
 				objectName : "trianglePlot"
 			}
 			Manipulator{
 				id: temperature
-				from: 0
-				to: 100
+				from: -5
+				to: 10
 				stepSize: 1
 				objectName: 'temperature_slider'
 				text: 'beta'
+				trans: a => Math.exp(a)
+				invtrans: a=> Math.log(a)
 				orientation: Qt.Vertical
 				width: 60
 				anchors.right: parent.right
@@ -111,14 +112,24 @@ ApplicationWindow {
 			}
 			Manipulator{
 				id: logL
-				from: -100
+				from: -5000
+				stepSize: 100
 				to: -1
 				objectName: 'logl_slider'
 				text: 'logL'
+				height: 40
 				anchors.left: mplView.left
 				anchors.top: mplView.bottom
-				anchors.bottom: parent.bottom
 				anchors.right: mplView.right
+			}
+			FigureCanvas{
+				id: higson		/*It should be capital, but you have*/
+				anchors.top: logL.bottom		 /* to follow the convention*/
+				height: 100
+				anchors.bottom: parent.bottom
+				anchors.left: logL.left
+				anchors.right: logL.right
+				objectName: 'higsonPlot'
 			}
 			Button{
 				anchors.top: mplView.top

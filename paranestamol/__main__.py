@@ -37,8 +37,8 @@ def main():
     displayBridge.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
 
-    displayBridge.canvas = win.findChild(QtCore.QObject, "trianglePlot")
-    displayBridge.figure = displayBridge.canvas.figure
+    displayBridge.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
+    displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot")
     temperatureSlider = win.findChild(QtCore.QObject, "temperature_slider")
     temperatureSlider.valueChangeFinished\
                      .connect(displayBridge.changeTemperature)
