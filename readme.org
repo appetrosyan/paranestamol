@@ -41,10 +41,11 @@
   integration is underway, but not usable. This means that the usual
   Higson plot that is in =anesthetic.gui()= is not yet production
   ready. 
-** TODO Reliable async plotting. 
-** TODO =nestcheck= integration. 
-** TODO File hot-reloading. 
-** TODO Logarithmic scale for the \(\beta\) slider. 
-
+* Missing features.
+ - File hot-reload. 
+ - `nestcheck` integration 
+ - Memory-efficient caching. 
+ - Efficient plot updates
+ - A better canvas than matplotlib. 
 
 
