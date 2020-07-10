@@ -33,7 +33,7 @@ ApplicationWindow {
 		folder: shortcuts.home
 		onAccepted: {
 			loadWindow.fileName = fileBrowse.fileUrl
-			loadWindow.fileModel.appendRow(cleanPath)
+			loadWindow.fileModel.appendRow(fileName)
 		}
 	}
 	header: ToolBar{

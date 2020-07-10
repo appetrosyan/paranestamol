@@ -1,0 +1,2 @@
+recursive-include paranestamol *.qml
+recursive-include paranestamol *.js 
