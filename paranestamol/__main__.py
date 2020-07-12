@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+g#!/usr/bin/env python
 """
 An example of using the backend
 """
@@ -14,6 +14,9 @@ def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     sys.argv += ['--style', 'material']
     app = QtGui.QGuiApplication(sys.argv)
+    app.setOrganizationName("Paranestamol")
+    app.setOrganizationDomain("Paranestamol.org")
+    app.setApplicationName("Paranestamol")
     engine = QtQml.QQmlApplicationEngine()
 
     context = engine.rootContext()
