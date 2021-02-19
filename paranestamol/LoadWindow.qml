@@ -27,7 +27,7 @@ Item{
 			id: fileRootBox
 			Layout.fillWidth: true
 			selectByMouse: true
-			placeholderText: qsTr("Path to samples `file_root`")
+			placeholderText: qsTr("Start by providing the path to samples' file_root")
 			onTextChanged: {
 				text= text.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"")
 				var cleanPath = decodeURIComponent(text)
