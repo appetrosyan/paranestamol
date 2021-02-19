@@ -1,19 +1,18 @@
-g#!/usr/bin/env python
+#!/usr/bin/env python
 """
 An example of using the backend
 """
 import sys
 from pathlib import Path
 from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
-from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore
+from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore, QtWidgets
 from .samples_model import SamplesModel, ParameterModel
 from .plt_managers import TrianglePlotter
 
 
 def main():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-    sys.argv += ['--style', 'material']
-    app = QtGui.QGuiApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     app.setOrganizationName("Paranestamol")
     app.setOrganizationDomain("Paranestamol.org")
     app.setApplicationName("Paranestamol")
