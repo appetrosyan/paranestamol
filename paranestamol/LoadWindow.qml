@@ -1,11 +1,14 @@
 import QtQuick.Controls 2.12
-import QtQuick.Controls.Material 2.12
-import QtQuick 2.12
+import QtQuick 2.15
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.0
 
 
 Item{
+	SystemPalette {
+		id: palette
+		colorGroup: SystemPalette.Active
+	}
 	property var fileModel
 	property alias fileName: fileRootBox.text
 	signal browseForFile()
@@ -17,39 +20,37 @@ Item{
 		showAlphaChannel: true
 	}
 	height: 200
-	TextField{
-		id: fileRootBox
-		anchors.top: parent.top
-		anchors.left: parent.left
-		anchors.right: browseButton.left
-		color: Material.foreground
-		anchors.rightMargin: 8
-		selectByMouse: true
-		placeholderText: qsTr("Path to samples `file_root`")
-		onTextChanged: {
-			text= text.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"")
-			var cleanPath = decodeURIComponent(text)
-			fileName = cleanPath
+	RowLayout{
+		id: fileRow
+		width: parent.width
+		TextField{
+			id: fileRootBox
+			Layout.fillWidth: true
+			selectByMouse: true
+			placeholderText: qsTr("Path to samples `file_root`")
+			onTextChanged: {
+				text= text.replace(/^(file:\/{2})|(qrc:\/{2})|(http:\/{2})/,"")
+				var cleanPath = decodeURIComponent(text)
+				fileName = cleanPath
+			}
 		}
-	}
-	Button{
-		id: browseButton
-		anchors.top: parent.top
-		anchors.right: loadButton.left
-		onClicked: {
-			browseForFile()
+		
+		Button{
+			id: browseButton
+			onClicked: {
+				browseForFile()
+			}
+				text: qsTr("Browse...")
+			}
+			Button{
+				id: loadButton
+				visible: fileRootBox.text!==''
+				onClicked:{
+					requestLoadSamples(fileRootBox.text)
+				}
+				text: qsTr("Load samples")
+			}
 		}
-		text: qsTr("Browse...")
-	}
-	Button{
-		id: loadButton
-		onClicked:{
-			requestLoadSamples(fileRootBox.text)
-		}
-		text: qsTr("Load samples")
-		anchors.top: parent.top
-		anchors.right: parent.right
-	}
 	Rectangle{
 		DropArea {
 			anchors.fill: parent
@@ -59,11 +60,11 @@ Item{
 			}
 		}
 		id: fileViewRect
-		anchors.top: fileRootBox.bottom
+		anchors.top: fileRow.bottom
 		width: parent.width
-		height: parent.height-fileRootBox.height-loadButton.height
-		border.color: Material.foreground
-		color: Material.background
+		height: parent.height-fileRow.height
+		border.color: palette.highlight
+		color: palette.text
 		border.width: 1
 		ListView{
 			id: fileView
