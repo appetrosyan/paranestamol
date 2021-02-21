@@ -12,7 +12,7 @@ class TrianglePlotter(QtCore.QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.beta = 0
+        self.beta = 1
         self.logL = -10000
         self.triCanvas = None
         self.higCanvas = None
@@ -42,6 +42,9 @@ class TrianglePlotter(QtCore.QObject):
         # three idiotic mistakes that had forever to get fixed. => matplotlib = bad
         # QED
         figsize = self.triCanvas.figure.get_figwidth(), self.triCanvas.figure.get_figheight()
+
+        # Another educational moment. You would think that this is enough.
+        # figsize = self.triCanvas.get_width_height()
         fig = updateTrianglePlot(plt.figure(figsize=figsize), self.params, self.tex,
                                  self.samples, self.legends, post)
         self.triCanvas.figure = fig
