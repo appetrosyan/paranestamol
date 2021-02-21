@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.0
 
 
+
 Item{
 	SystemPalette {
 		id: palette
@@ -63,13 +64,10 @@ Item{
 		anchors.top: fileRow.bottom
 		width: parent.width
 		height: parent.height-fileRow.height
-		border.color: palette.highlight
-		color: palette.text
 		border.width: 1
 		ListView{
 			id: fileView
 			anchors.fill: parent
-			anchors.centerIn: parent
 			model: fileModel
 			ScrollIndicator.vertical: ScrollIndicator{
 				parent: fileView.parent
@@ -80,6 +78,11 @@ Item{
 			clip: true
 			delegate: Component{
 				Item{
+					property bool selected: fileView.currentIndex === index
+					MouseArea{
+						anchors.fill: parent
+						onClicked: fileView.currentIndex = index
+					}
 					width: parent.width
 					height: childrenRect.height
 					CheckBox{
@@ -88,6 +91,7 @@ Item{
 						onClicked: {
 							model.display = !model.display
 						}
+						anchors.verticalCenter: fileLine.verticalCenter
 					}
 					Rectangle{
 						id: legendColor
@@ -120,11 +124,14 @@ Item{
 						anchors.left: legendColor.right
 						anchors.leftMargin: 5
 						anchors.right: parent.right
+						anchors.rightMargin: 8
 						wrapMode: TextInput.Wrap
 						text: model.legend_name
 						width: 100
 						font.bold: true
 						font.pointSize: 16
+						color: selected? palette.highlightedText: palette.text
+						onTextEdited: fileView.currentIndex = index
 						onAccepted:{
 							model.legend_name = text
 							text = model.legend_name
@@ -138,6 +145,7 @@ Item{
 						anchors.top: fileLine.bottom
 						anchors.left: parent.left
 						anchors.right: parent.right
+						color: selected? palette.highlightedText: palette.text
 						text: model.url
 						leftPadding: 5
 						topPadding: 5
@@ -151,6 +159,7 @@ Item{
 						anchors.top: pathLine.bottom
 						anchors.left: parent.left
 						anchors.right: parent.right
+						color: selected? palette.highlightedText: palette.text
 						text: 'logZ: %1, D: %2, BMD: %3'.arg(model.logZ)
 							.arg(model.Dkl).arg(model.bmd)
 						bottomPadding: 5
@@ -162,16 +171,10 @@ Item{
 				}
 			}
 			highlight: Rectangle{
-				y: fileView.currentItem.y
-				radius: 5
+				anchors.top: fileView.currentItem.top
+				anchors.bottom: fileView.currentItem.bottom
 				width: fileView.currentItem.width
-				height: fileView.currentItem.height
-				Behavior on y{
-					SpringAnimation{
-						spring: 3
-						damping: 0.2
-					}
-				}
+				color: palette.highlight
 			}
 			highlightFollowsCurrentItem: true
 			focus: true

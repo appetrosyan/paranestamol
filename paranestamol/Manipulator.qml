@@ -22,14 +22,14 @@ Item{
 			id: marker
 			anchors.top: parent.top
 			anchors.horizontalCenter: parent.horizontalCenter
-			color: Material.foreground
+			// color: Material.foreground
 			font.bold: true
 		}
 		TextInput{
 			id: currentValue
 			text: "%1".arg(Math.round(trans(slider.value)))
 			font.bold: !focus
-			color: focus?Material.accent:Qt.darker(Material.accent)
+			// color: focus?Material.accent:Qt.darker(Material.accent)
 			property var value: trans(slider.value)
 			anchors.topMargin: 20
 			anchors.top: marker.bottom
