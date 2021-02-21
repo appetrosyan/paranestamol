@@ -71,8 +71,7 @@ class TrianglePlotter(QtCore.QObject):
     def invalidateCache(self, *args):
         self._LCache = {}
 
-    @QtCore.Slot(float)
-    def changeLogL(self, logL, *args):
+    def _cache_figure(self, logL, *args):
         self._LCache[self.logL] = self.triCanvas.figure
         self.logL = logL
         if self.logL in self._LCache:
@@ -82,6 +81,26 @@ class TrianglePlotter(QtCore.QObject):
         else:
             self._update_triangle(lambda x: x.live_points(self.logL))
             self._LCache[self.logL] = self.triCanvas.figure
+
+    def _cache_rgb(self, logL, *args):
+        print('caching what we have')
+        rgb = self.triCanvas.tostring_rgb()
+        ncols, nrows = self.triCanvas.get_width_height()
+        self._LCache[self.logL] = np.fromstring(rgb, dtype=np.uint8).reshape(nrows, ncols, 3)
+        self.logL = logL
+        if self.logL in self._LCache:
+            print(f're-using for {self.logL}')
+            ax = self.triCanvas.figure.gca()
+            ax.imshow(self._LCache[self.logL])
+            self.triCanvas.draw_idle()
+        else:
+            print(f'drawing {self.logL}')
+            self._update_triangle(lambda x: x.live_points(self.logL))
+        
+    @QtCore.Slot(float)
+    def changeLogL(self, logL, *args):
+        self._cache_figure(logL, *args)
+        # self._cache_rgb(logL, *args)
 
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
