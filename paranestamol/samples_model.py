@@ -15,7 +15,7 @@ class Legend:
     def __init__(self, title='', color=None, alpha=None):
         self.title = title
         if color is not None:
-            self.color = color  # Let's be international.
+            self.color = color
         else:
             self.color = Legend.colorCycles[Legend.currentColor
                                             % len(Legend.colorCycles)]
@@ -31,7 +31,7 @@ class Legend:
         def color_(self, color):
             if isinstance(color, str):
                 if len(color > 7):
-                    self._color = '#{}'.format(color[3:])
+                    self._color = f'#{color[3:]}'
                     self.alpha = int(color[1:3], 16)/int("ff", 16)
 
 
