@@ -48,6 +48,10 @@ def parse_args():
         '--live',
         help='Start the application in live editing mode', action='store_true'
     )
+
+    # parser.add_argument(
+        # 'file_roots', metavar='N', type=str, nargs='+', help='Add the following file to the file root'
+    # )
     return parser.parse_args()
 
 
