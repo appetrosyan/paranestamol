@@ -145,6 +145,9 @@ class SamplesModel(QtCore.QAbstractListModel):
         }
         return roles
 
+    def count(self):
+        return len(self.samples)
+    
     def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
             return 0
@@ -191,9 +194,7 @@ class SamplesModel(QtCore.QAbstractListModel):
     @QtCore.Slot(str)
     def appendRow(self, file_root, *args):
         rt, _ = cleanupFileRoot(file_root)
-        self.notify.emit('Loading...')
         if basename(rt) not in self.names:
-
             self.beginInsertRows(QtCore.QModelIndex(),
                                  self.rowCount(), self.rowCount())
             samples = NestedSamples(root=rt)
@@ -204,12 +205,14 @@ class SamplesModel(QtCore.QAbstractListModel):
             self.samples[basename(rt)] = samples
             self.newParams.emit(samples.columns, samples.tex)
             self.displayed_names.add(basename(rt))
+            # self.rowCountChanged.emit(len(self.samples), len(self.samples)+1)
             self.endInsertRows()
-
             self.reqRepaint()
-            self.notify.emit('Loaded.')
         else:
             self.notify.emit(f'Samples: {basename(rt)} - already loaded.')
+
+    def hasChildren(self):
+        return len(self.samples)>0
 
     def flags(self, index):
         return QtCore.Qt.ItemIsEditable | \

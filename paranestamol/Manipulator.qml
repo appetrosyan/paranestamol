@@ -22,14 +22,12 @@ Item{
 			id: marker
 			anchors.top: parent.top
 			anchors.horizontalCenter: parent.horizontalCenter
-			// color: Material.foreground
 			font.bold: true
 		}
 		TextInput{
 			id: currentValue
 			text: "%1".arg(Math.round(trans(slider.value)))
 			font.bold: !focus
-			// color: focus?Material.accent:Qt.darker(Material.accent)
 			property var value: trans(slider.value)
 			anchors.topMargin: 20
 			anchors.top: marker.bottom
@@ -70,14 +68,14 @@ Item{
 		orientation: Qt.Horizontal
 		stepSize: 1
 		Component.onCompleted: {
-			if (horizontal){
+			if (orientation === Qt.Horizontal){
 				anchors.top = parent.top
 				anchors.left = info.right
+				anchors.right = parent.right
 			} else {
-				anchors.left = parent.left
 				anchors.top = info.bottom
+				anchors.horizontalCenter = info.horizontalCenter // Why doesn't this FUCKING WORK!
 			}
-			anchors.right = parent.right
 			anchors.bottom = parent.bottom
 		}
 	}

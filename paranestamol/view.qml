@@ -48,14 +48,16 @@ ApplicationWindow {
 			anchors.left: parent.left
 		}
 		PageIndicator{
+			id: pageIndicator
 			count: mainView.count
+			visible: samplesView.visible
 			currentIndex: mainView.currentIndex
 			anchors.verticalCenter: parent.verticalCenter
 			anchors.horizontalCenter: parent.horizontalCenter
 			interactive: true
 		}
 		ToolButton {
-			visible: mainView.itemAt(mainView.currentIndex+1)
+			visible: mainView.itemAt(mainView.currentIndex+1) && mainView.itemAt(mainView.currentIndex + 1).visible
 			text: visible?mainView.itemAt(mainView.currentIndex+1).title:''
 			onClicked: {
 				mainView.incrementCurrentIndex()
@@ -66,8 +68,9 @@ ApplicationWindow {
 	SwipeView{
 		id: mainView
 		anchors.fill: parent
+		interactive: pageIndicator.visible
 		Page{
-			title: "Load Samples"
+			title: qsTr("Load Samples")
 			LoadWindow{
 				id: loadWindow
 				fileModel: samplesModel
@@ -77,6 +80,7 @@ ApplicationWindow {
 				}
 				onRequestLoadSamples:{
 					fileModel.appendRow(filename)
+					samplesView.visible = true
 				}
 				anchors.centerIn: parent
 				anchors.leftMargin: 8
@@ -86,7 +90,9 @@ ApplicationWindow {
 			}
 		}
 		Page {
-			title: "View Samples"
+			id: samplesView
+			title: qsTr("View Samples")
+			visible: samplesModel.rowCount()
 			FigureCanvas {
 				id: mplView
 				anchors.left: parent.left
@@ -98,7 +104,7 @@ ApplicationWindow {
 			}
 			Manipulator{
 				id: temperature
-				from: -5
+				from: 0
 				to: 10
 				stepSize: 1
 				objectName: 'temperature_slider'
@@ -110,6 +116,7 @@ ApplicationWindow {
 				anchors.right: parent.right
 				anchors.top: mplView.top
 				anchors.bottom: mplView.bottom
+				anchors.left: mplView.right
 			}
 			Manipulator{
 				id: logL
@@ -143,16 +150,16 @@ ApplicationWindow {
 				}
 				Popup{
 					id: paramsPopup
-					width: 200
-					height: 400
+					width: 160
+					height: 200
 					ListView{
 						id: paramView
 						model: paramsModel
 						anchors.fill: parent 
 						delegate: Component{
 							Item{
-								height: 80
-								width: parent.width
+								height: selectedBox.height
+								width: paramView.width
 								CheckBox{
 									id: selectedBox
 									checked: model.selected
@@ -167,7 +174,6 @@ ApplicationWindow {
 									anchors.right: parent.right
 									anchors.verticalCenter: parent.verticalCenter
 									text: model.name
-									color: Material.foreground
 								}
 							}
 						}
