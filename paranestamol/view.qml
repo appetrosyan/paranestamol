@@ -26,6 +26,7 @@ ApplicationWindow {
 	function displayPythonMessage(msg){
 		statusBar.text = msg
 	}
+
 	FileDialog{
 		id: fileBrowse
 		title: qsTr("Please choose the samples root file")
@@ -151,7 +152,7 @@ ApplicationWindow {
 						delegate: Component{
 							Item{
 								height: 80
-								width: paramView.width
+								width: parent.width
 								CheckBox{
 									id: selectedBox
 									checked: model.selected
