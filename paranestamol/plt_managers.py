@@ -34,6 +34,13 @@ class TrianglePlotter(QtCore.QObject):
     def _update_triangle(self, post=None):
         if post is None:
             post = lambda x: x
+
+        # An educational moment. Proof matplotlib is bad
+        # get_ in python is redundant, 
+        # I already know that it's a figure (no thanks to duck typing)
+        # fig_height or figHeight are both equal in being better than figheight
+        # three idiotic mistakes that had forever to get fixed. => matplotlib = bad
+        # QED
         figsize = self.triCanvas.figure.get_figwidth(), self.triCanvas.figure.get_figheight()
         fig = updateTrianglePlot(plt.figure(figsize=figsize), self.params, self.tex,
                                  self.samples, self.legends, post)
@@ -55,6 +62,11 @@ class TrianglePlotter(QtCore.QObject):
             LX = np.exp(LX-LX.max())
             ax.plot(logX, LX, color=self.legends[x].color)
         self.higCanvas.draw_idle()
+
+    @QtCore.Slot()
+    @QtCore.Slot(object, object)
+    def invalidateCache(self, *args):
+        self._LCache = {}
 
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
@@ -78,14 +90,17 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(object)
     @QtCore.Slot(object, object)
     def reDraw(self, samples=None, legends=None, *args):
-        if samples is not None:
+        print(samples, legends)
+        if samples is not None and not isinstance(samples, QtCore.QModelIndex):
             self.samples = samples
         if legends is None:
             if self.legends is None:
                 for k in self.samples:
                     self.legends[k] = Legend(title=k)
         else:
-            self.legends = legends
+            # Fuck the Duck typing. 
+            if not isinstance(legends, QtCore.QModelIndex):
+                self.legends = legends
         self.notify.emit('Full repaint...')
         self._update_triangle()
         self._update_higson()
@@ -109,3 +124,4 @@ def updateTrianglePlot(figure, params, tex, samples, legends, postprocess):
         .get_legend_handles_labels()
     figure.legend(handles, labels)
     return figure
+
