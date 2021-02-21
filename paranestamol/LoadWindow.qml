@@ -120,7 +120,6 @@ Item{
 						anchors.left: legendColor.right
 						anchors.leftMargin: 5
 						anchors.right: parent.right
-						color: Material.foreground
 						wrapMode: TextInput.Wrap
 						text: model.legend_name
 						width: 100
@@ -139,7 +138,6 @@ Item{
 						anchors.top: fileLine.bottom
 						anchors.left: parent.left
 						anchors.right: parent.right
-						color: Material.foreground
 						text: model.url
 						leftPadding: 5
 						topPadding: 5
@@ -153,7 +151,6 @@ Item{
 						anchors.top: pathLine.bottom
 						anchors.left: parent.left
 						anchors.right: parent.right
-						color: Material.foreground
 						text: 'logZ: %1, D: %2, BMD: %3'.arg(model.logZ)
 							.arg(model.Dkl).arg(model.bmd)
 						bottomPadding: 5
@@ -166,8 +163,6 @@ Item{
 			}
 			highlight: Rectangle{
 				y: fileView.currentItem.y
-				border.color: Material.accent
-				color: Qt.lighter(Material.background)
 				radius: 5
 				width: fileView.currentItem.width
 				height: fileView.currentItem.height
