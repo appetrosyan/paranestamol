@@ -40,7 +40,7 @@ class TrianglePlotter(QtCore.QObject):
         self.triCanvas.figure = fig
         fig.set_canvas(self.triCanvas)
         self.triCanvas.draw_idle()
-        # self._create_higson()
+        self._update_higson()
 
     def _update_higson(self):
         fig = self.higCanvas.figure
@@ -105,7 +105,7 @@ def updateTrianglePlot(figure, params, tex, samples, legends, postprocess):
                                'lower': 'scatter',
                                'diagonal': 'hist',
                            })
-    handles, labels = axes[params[0]][params[0]]\
+    handles, labels = axes[params[0]][params[1]]\
         .get_legend_handles_labels()
     figure.legend(handles, labels)
     return figure
