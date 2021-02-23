@@ -29,6 +29,8 @@ class TrianglePlotter(QtCore.QObject):
         self._thread.start()
         self._worker = ThreadedPlotter()
         self._worker.moveToThread(self._thread)
+        self.reqTriangleRedraw.connect(self._worker.plot_triangle)
+        self._worker.finished.connect(self.updateTriangleFigure)
         
 
     @property
@@ -48,11 +50,12 @@ class TrianglePlotter(QtCore.QObject):
     def _update_triangle(self, post=None):
         if post is None:
             post = lambda x: x
-        fig = self.tricanvas.figure
+        fig = self.triCanvas.figure
         figsize = fig.get_figwidth(), fig.get_figheight()
-        fig = updateTrianglePlot(Figure(figsize=figsize), self.params, self.tex,
-                                 self.samples, self.legends, post)
-        
+        self.reqTriangleRedraw.emit(Figure(figsize=figsize), self.params, self.tex, self.samples, self.legends, post)
+        # fig = updateTrianglePlot(Figure(figsize=figsize), self.params, self.tex,
+        #                          self.samples, self.legends, post)
+        # self.updateTriangleFigure(fig)
         # self._update_higson()
 
     def _update_higson(self):
@@ -74,46 +77,6 @@ class TrianglePlotter(QtCore.QObject):
     def invalidateCache(self, *args):
         self.notify.emit('Invalidating cache')
         figsize = self.triCanvas.figure.get_figwidth(), self.triCanvas.figure.get_figheight()
-
-        # params = self.params
-        # tex = self.tex
-        # samples = self.samples
-        # legends = self.legends
-
-        # # This function doesn't work. I don't know why it doesn't
-        # # work, because for all intents and purposes, the data that it
-        # # is being given is constructed in place and *copied*.
-        # # WeightedSeries object has not attribute _name.  Had python
-        # # had a decent typing system, this could have been an easily
-        # # debuggable issue. Instead it has duck typing.
-
-        # # duck you, and duck your typing. You should have used a
-        # # decent type inference system. In fact any decent Type
-        # # system.
-     
-        # def produceFig(logL):
-        #     figure, axes = make_2d_axes(params, tex=tex, fig=plt.figure(figsize=figsize), upper=False)
-        #     for x in samples:
-        #         samples[x]\
-        #             .plot_2d(axes,
-        #                      alpha=legends[x].alpha,
-        #                      color=legends[x].color,
-        #                      label=legends[x].title,
-        #                      types={
-        #                          'lower': 'scatter',
-        #                          # 'diagonal': 'hist',
-        #                      })
-        #         handles, labels = axes[params[0]][params[1]]\
-        #             .get_legend_handles_labels();print(13)
-        #         figure.legend(handles, labels);print(14)
-        #         return figure;print(15)
-           
-        # with pp.ProcessPool() as p:
-        #     res = {k: p.apipe(produceFig, k) for k in self._LCache}
-        # self.notify.emit('cache rebuilt')
-        # try:
-        #     self._LCache = {k: res[k].get() for k in res}
-        # except:
         self._LCache = {}
 
         
@@ -180,8 +143,9 @@ class ThreadedPlotter(QtCore.QObject):
     finished = QtCore.Signal(object)
 
     @QtCore.Slot(object, object, object, object, object, object)
-    def plot_triangle(figure, params, tex, samples, legends, postprocess):
-        self.finished.emit(updateTrianglePlot(figure, params, tex, samples, legends, postprocess))
+    def plot_triangle(self, *args):
+        fig = updateTrianglePlot(*args)
+        self.finished.emit(fig)
         
 
 
