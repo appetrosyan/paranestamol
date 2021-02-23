@@ -11,6 +11,7 @@ from multiprocessing import Pool
 class TrianglePlotter(QtCore.QObject):
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
+    reqTriangleRedraw = QtCore.Signal(object, object, object, object, object, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -24,6 +25,11 @@ class TrianglePlotter(QtCore.QObject):
         self.paramsModel = None
         self._betaCache = {}
         self._LCache = {}
+        self._thread = QtCore.QThread()
+        self._thread.start()
+        self._worker = ThreadedPlotter()
+        self._worker.moveToThread(self._thread)
+        
 
     @property
     def params(self):
@@ -33,26 +39,21 @@ class TrianglePlotter(QtCore.QObject):
     def tex(self):
         return self.paramsModel.tex
 
-    def _update_triangle(self, post=None):
-        if post is None:
-            post = lambda x: x
-
-        # An educational moment. Proof matplotlib is bad
-        # get_ in python is redundant, 
-        # I already know that it's a figure (no thanks to duck typing)
-        # fig_height or figHeight are both equal in being better than figheight
-        # three idiotic mistakes that had forever to get fixed. => matplotlib = bad
-        # QED
-        figsize = self.triCanvas.figure.get_figwidth(), self.triCanvas.figure.get_figheight()
-
-        # Another educational moment. You would think that this is enough.
-        # figsize = self.triCanvas.get_width_height()
-        fig = updateTrianglePlot(Figure(figsize=figsize), self.params, self.tex,
-                                 self.samples, self.legends, post)
+    @QtCore.Slot(object)
+    def updateTriangleFigure(self, fig):
         self.triCanvas.figure = fig
         fig.set_canvas(self.triCanvas)
         self.triCanvas.draw_idle()
-        self._update_higson()
+
+    def _update_triangle(self, post=None):
+        if post is None:
+            post = lambda x: x
+        fig = self.tricanvas.figure
+        figsize = fig.get_figwidth(), fig.get_figheight()
+        fig = updateTrianglePlot(Figure(figsize=figsize), self.params, self.tex,
+                                 self.samples, self.legends, post)
+        
+        # self._update_higson()
 
     def _update_higson(self):
         fig = self.higCanvas.figure
@@ -173,6 +174,15 @@ class TrianglePlotter(QtCore.QObject):
         self._update_triangle()
         self._update_higson()
         self.notify.emit('Fully repainted.')
+
+
+class ThreadedPlotter(QtCore.QObject):
+    finished = QtCore.Signal(object)
+
+    @QtCore.Slot(object, object, object, object, object, object)
+    def plot_triangle(figure, params, tex, samples, legends, postprocess):
+        self.finished.emit(updateTrianglePlot(figure, params, tex, samples, legends, postprocess))
+        
 
 
 def updateTrianglePlot(figure, params, tex, samples, legends, postprocess):
