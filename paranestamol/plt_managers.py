@@ -1,5 +1,5 @@
 from matplotlib_backend_qtquick.qt_compat import QtCore
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from anesthetic import make_2d_axes
 # import pathos.pools as pp
 from .samples_model import Legend
@@ -47,7 +47,7 @@ class TrianglePlotter(QtCore.QObject):
 
         # Another educational moment. You would think that this is enough.
         # figsize = self.triCanvas.get_width_height()
-        fig = updateTrianglePlot(plt.figure(figsize=figsize), self.params, self.tex,
+        fig = updateTrianglePlot(Figure(figsize=figsize), self.params, self.tex,
                                  self.samples, self.legends, post)
         self.triCanvas.figure = fig
         fig.set_canvas(self.triCanvas)
