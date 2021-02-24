@@ -115,7 +115,7 @@ ApplicationWindow {
 				width: 60
 				anchors.right: parent.right
 				anchors.top: mplView.top
-				anchors.bottom: mplView.bottom
+				anchors.bottom: parent.bottom
 				anchors.left: mplView.right
 			}
 			Manipulator{
@@ -153,10 +153,20 @@ ApplicationWindow {
 					id: paramsPopup
 					width: 160
 					height: 200
+
+					TextField{
+						id: filter
+						width: parent.width
+						placeholderText: qsTr('Filter')
+						onTextChanged: paramsModel.setFilterFixedString(text)
+					}
 					ListView{
 						id: paramView
 						model: paramsModel
-						anchors.fill: parent 
+						anchors.top: filter.bottom
+						anchors.right: parent.right
+						anchors.bottom: parent.bottom
+						anchors.left: parent.left
 						delegate: Component{
 							Item{
 								height: selectedBox.height

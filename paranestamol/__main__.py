@@ -76,8 +76,12 @@ def main():
     samplesModel = SamplesModel()
     displayBridge.paramsModel = paramsModel
 
+    proxy = QtCore.QSortFilterProxyModel()
+    proxy.setSourceModel(paramsModel)
+    proxy.setFilterRole(ParameterModel.nameRole)
+
     context.setContextProperty("displayBridge", displayBridge)
-    context.setContextProperty('paramsModel', paramsModel)
+    context.setContextProperty('paramsModel', proxy)
     context.setContextProperty("samplesModel", samplesModel)
 
     qmlFileRoot =str(Path(Path.cwd(), Path(__file__).parent, "view.qml"))
