@@ -7,6 +7,26 @@ import numpy as np
 from multiprocessing import Pool
 
 
+def updateTrianglePlot(figure, params, tex, samples, legends, logL):
+    figure.clear()
+    figure, axes = make_2d_axes(params, tex=tex, fig=figure, upper=False)
+    for x in samples:
+        samples[x]\
+            .live_points(logL)\
+            .plot_2d(axes,
+                     alpha=legends[x].alpha,
+                     color=legends[x].color,
+                     label=legends[x].title,
+                     types={
+                         'lower': 'scatter',
+                         'diagonal': 'hist',
+                     })
+    handles, labels = axes[params[0]][params[1]]\
+        .get_legend_handles_labels()
+    figure.legend(handles, labels)
+    return figure
+
+
 class TrianglePlotter(QtCore.QObject):
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
@@ -62,7 +82,6 @@ class TrianglePlotter(QtCore.QObject):
         self._LCache[logL] = fig
         if self.logL == logL:
             self._updateTriangleFigure(self._LCache[logL])
-            print(f'displaying {logL}')
 
         
     @QtCore.Slot(object)
@@ -189,7 +208,6 @@ class ThreadedStackBuffer(QtCore.QObject):
 
     def pop(self):
         try:
-            print(f'pop {self._buffer[-1][-1]}')
             self.autopop=False
             self.popped.emit(*self._buffer.pop())
         except:
@@ -198,29 +216,11 @@ class ThreadedStackBuffer(QtCore.QObject):
         
     @QtCore.Slot(object, object, object, object, object, float)
     def push(self, *args):
-        print(f'push {args[-1]}')
         self._buffer.append(args)
         if self.autopop:
             self.pop()
         
 
 
-def updateTrianglePlot(figure, params, tex, samples, legends, logL):
-    figure.clear()
-    figure, axes = make_2d_axes(params, tex=tex, fig=figure, upper=False)
-    for x in samples:
-        samples[x]\
-            .live_points(logL)\
-            .plot_2d(axes,
-                     alpha=legends[x].alpha,
-                     color=legends[x].color,
-                     label=legends[x].title,
-                     types={
-                         'lower': 'scatter',
-                         'diagonal': 'hist',
-                     })
-    handles, labels = axes[params[0]][params[1]]\
-        .get_legend_handles_labels()
-    figure.legend(handles, labels)
-    return figure
+
 
