@@ -8,7 +8,6 @@ from multiprocessing import Pool
 
 
 def updateTrianglePlot(figure, params, tex, samples, legends, logL):
-    figure.clear()
     figure, axes = make_2d_axes(params, tex=tex, fig=figure, upper=False)
     for x in samples:
         samples[x]\
@@ -67,7 +66,7 @@ class TrianglePlotter(QtCore.QObject):
     @higCanvas.setter
     def higCanvas(self, other):
         self._higson.higCanvas = other
-    
+
     @property
     def params(self):
         return list(self.paramsModel.displayNames)
@@ -83,7 +82,7 @@ class TrianglePlotter(QtCore.QObject):
         if self.logL == logL:
             self._updateTriangleFigure(self._LCache[logL])
 
-        
+
     @QtCore.Slot(object)
     def _updateTriangleFigure(self, fig):
         self.triCanvas.figure = fig
@@ -93,11 +92,9 @@ class TrianglePlotter(QtCore.QObject):
     def request_update_triangle(self, post=None, logL=-1):
         fig = self.triCanvas.figure
         figsize = fig.get_figwidth(), fig.get_figheight()
-        self.reqNewTriangle.emit(Figure(figsize=figsize), self.params, self.tex, self.samples, self.legends, logL)
-
-
-    def _update_higson(self, *args):
-        self._higson._update_higson(*args)
+        self.reqNewTriangle.emit(Figure(figsize=figsize),
+                                 self.params, self.tex,
+                                 self.samples, self.legends, logL)
 
     @QtCore.Slot()
     @QtCore.Slot(object, object)
@@ -108,7 +105,7 @@ class TrianglePlotter(QtCore.QObject):
         for x in old_cache:
             self.request_update_triangle(logL=x)
         self._stack.pop()
-        
+
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
         self.logL = logL
@@ -122,7 +119,7 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
-        self._update_higson(self.samples, self.legends)
+        self._higson._update_higson(self.samples, self.legends)
 
     @QtCore.Slot()
     @QtCore.Slot(object)
@@ -134,17 +131,18 @@ class TrianglePlotter(QtCore.QObject):
                 for k in self.samples:
                     self.legends[k] = Legend(title=k)
         else:
-            # Fuck the Duck typing. 
+            # Fuck the Duck typing.
             if not isinstance(legends, QtCore.QModelIndex):
                 self.legends = legends
         self._stack.pop()
-        self._update_higson(self.samples, self.legends)
+        self._higson._update_higson(self.samples, self.legends)
 
 
 class HigsonPlotter(QtCore.QObject):
     def __init__(self,  parent=None):
         super().__init__(parent)
         self._beta = 1
+        self._cache = {}
 
     @property
     def beta(self):
@@ -161,27 +159,30 @@ class HigsonPlotter(QtCore.QObject):
     @higCanvas.setter
     def higCanvas(self, other):
         self._higCanvas = other
-        fig = self.higCanvas.figure
-        ax = fig.gca()
-        ax.cla()
-        ax.xaxis.set_tick_params(labeltop='on')
-        ax.xaxis.set_tick_params(labelbottom=False)
-        ax.set_xlabel(r'$\log X$')
-        ax.set_ylabel(r'$LX$', labelpad=-30)
-        fig.set_tight_layout({'pad': 0})
+        self.ax = self.higCanvas.figure.gca()
+        self.ax.cla()
+        self.ax.xaxis.set_tick_params(labeltop='on')
+        self.ax.xaxis.set_tick_params(labelbottom=False)
+        self.ax.set_xlabel(r'$\log X$')
+        self.ax.set_ylabel(r'$LX$', labelpad=-30)
+        self.higCanvas.figure.set_tight_layout({'pad': 0})
 
     def _update_higson(self, samples, legends):
-        ax = self.higCanvas.figure.gca()
-        try:
-            ax.lines[0].remove()
-        except:
-            pass
+        self.ax.lines.clear()
         for x in samples:
-            with np.errstate(divide='ignore'):
-                logX = np.log(samples[x].nlive / (samples[x].nlive+1)).cumsum()
-            LXi = samples[x].logL/self.beta + logX
-            LX = np.exp(LXi-LXi.max())
-            ax.plot(logX[::-1], LX, color=legends[x].color)
+            if self.beta in self._cache and x in self._cache[self.beta]:
+                logX, LX = self._cache[self.beta][x]
+            else:
+                with np.errstate(divide='ignore'):
+                    logX = np.log(samples[x].nlive / (samples[x].nlive+1)).cumsum()
+                LXi = samples[x].logL/self.beta + logX
+                LX = np.exp(LXi-LXi.max())
+                try:
+                    self._cache[self.beta][x] = (logX, LX)
+                except KeyError as e:
+                    self._cache[self.beta] = {}
+                    self._cache[self.beta][x] = (logX, LX)
+            self.ax.plot(logX[::-1], LX, color=legends[x].color)
         self.higCanvas.draw_idle()
 
 class ThreadedPlotter(QtCore.QObject):
@@ -213,14 +214,9 @@ class ThreadedStackBuffer(QtCore.QObject):
         except:
             self.autopop=True
 
-        
+
     @QtCore.Slot(object, object, object, object, object, float)
     def push(self, *args):
         self._buffer.append(args)
         if self.autopop:
             self.pop()
-        
-
-
-
-
