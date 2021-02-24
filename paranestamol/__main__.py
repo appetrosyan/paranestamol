@@ -76,8 +76,6 @@ def main():
     samplesModel = SamplesModel()
     displayBridge.paramsModel = paramsModel
 
-
-
     context.setContextProperty("displayBridge", displayBridge)
     context.setContextProperty('paramsModel', paramsModel)
     context.setContextProperty("samplesModel", samplesModel)
