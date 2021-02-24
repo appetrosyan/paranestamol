@@ -106,7 +106,7 @@ ApplicationWindow {
 				id: temperature
 				from: 0
 				to: 10
-				stepSize: 1
+				stepSize: 0.2
 				objectName: 'temperature_slider'
 				text: 'beta'
 				trans: a => Math.exp(a)
@@ -120,9 +120,10 @@ ApplicationWindow {
 			}
 			Manipulator{
 				id: logL
-				from: -5000
-				stepSize: 100
+				from: samplesModel.minLogL
+				stepSize: (-1 - samplesModel.minLogL)/30
 				to: -1
+				value: -1
 				objectName: 'logl_slider'
 				text: 'logL'
 				height: 40
