@@ -6,6 +6,8 @@ from matplotlib_backend_qtquick.qt_compat import QtCore
 from anesthetic.samples import NestedSamples, MCMCSamples
 from os.path import splitext, basename
 import matplotlib.pyplot as plt
+from math import ceil
+
 
 
 class Legend:
@@ -74,16 +76,20 @@ class ParameterModel(QtCore.QAbstractListModel):
     def appendRow(self, name, tex=None, show=False):
         self.names.add(name)
 
+
     @QtCore.Slot(object, object)
     def addParams(self, params, tex):
         self.beginResetModel()
-        if self.names == []:
-            self.names = params
+        if list(self.names) == []: # Pandas Index can't be compared to a list
+            self.names = params 
         else:
             self.names.intersection([params])
             self.tex = {}
         for name in self.names:
-            self.tex[name] = tex[name]
+            try:
+                self.tex[name] = tex[name]
+            except:
+                self.tex[name] = name
         if self.displayNames == {}:
             self.displayNames = set(self.names[:3])
         self.endResetModel()
@@ -115,10 +121,29 @@ class ParameterModel(QtCore.QAbstractListModel):
 
 
 class SamplesModel(QtCore.QAbstractListModel):
+    # signals
     fullRepaint = QtCore.Signal(object, object)
     notify = QtCore.Signal(str)
     newParams = QtCore.Signal(object, object)
+    minLogLChanged = QtCore.Signal()
+    maxLogLChanged = QtCore.Signal()
 
+    def _minLogL(self):
+        try:
+            return min(self.samples[x].logL.min() for x in self.samples) - 1
+        except ValueError:
+            return 0
+
+    def _maxLogL(self):
+        try: 
+            return ceil(max(self.samples[x].logL.max() for x in self.samples))
+        except ValueError:
+            return 0
+    
+    minLogL = QtCore.Property(float, _minLogL, notify=minLogLChanged)
+    maxLogL = QtCore.Property(float, _maxLogL, notify=maxLogLChanged)
+
+    # Roles, i.e. properties for each model element
     nameRole = QtCore.Qt.UserRole + 1000 + 0
     urlRole = QtCore.Qt.UserRole + 1000 + 1
     legendNameRole = QtCore.Qt.UserRole + 1000 + 2
@@ -207,6 +232,8 @@ class SamplesModel(QtCore.QAbstractListModel):
             self.displayed_names.add(basename(rt))
             # self.rowCountChanged.emit(len(self.samples), len(self.samples)+1)
             self.endInsertRows()
+            self.minLogLChanged.emit()
+            self.maxLogLChanged.emit()
             self.reqRepaint()
         else:
             self.notify.emit(f'Samples: {basename(rt)} - already loaded.')
@@ -255,6 +282,8 @@ class SamplesModel(QtCore.QAbstractListModel):
                 return True
         else:
             return False
+
+    
 
     def __init__(self, parent=None, names=[], samples={}):
         super(SamplesModel, self).__init__(parent)
