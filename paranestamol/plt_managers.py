@@ -34,7 +34,6 @@ class TrianglePlotter(QtCore.QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logL = -1
-        self.triCanvas = None
         self.legends = {}
         self.samples = dict()
         self.paramsModel = None
@@ -48,6 +47,7 @@ class TrianglePlotter(QtCore.QObject):
         self.reqNewTriangle.connect(self._stack.push)
         self._stack.popped.connect(self._worker.plot_triangle)
         self._worker.finished.connect(self.cacheTriangleFigure)
+        self._invalidating = False
 
 
     @property
@@ -74,13 +74,17 @@ class TrianglePlotter(QtCore.QObject):
     @property
     def tex(self):
         return self.paramsModel.tex
-
+    
     @QtCore.Slot(float, object)
     def cacheTriangleFigure(self, logL, fig):
         self._stack.pop()
-        self._LCache[logL] = fig
-        if self.logL == logL:
-            self._updateTriangleFigure(self._LCache[logL])
+        if not self._invalidating: 
+            self._LCache[logL] = fig
+            if self.logL == logL:
+                self._updateTriangleFigure(self._LCache[logL])
+        else:
+            self._invalidating = False
+                
 
 
     @QtCore.Slot(object)
@@ -99,8 +103,9 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot()
     @QtCore.Slot(object, object)
     def invalidateCache(self, *args):
+        self._invalidating = True
         self._stack.clear_buffer()
-        old_cache = self._LCache
+        old_cache = self._LCache.keys()
         self._LCache = {}
         for x in old_cache:
             self.request_update_triangle(logL=x)
@@ -125,17 +130,16 @@ class TrianglePlotter(QtCore.QObject):
     @QtCore.Slot(object)
     @QtCore.Slot(object, object)
     def reDraw(self, samples=None, legends=None, *args):
-        if samples is not None and not isinstance(samples, QtCore.QModelIndex):
-            self.samples = samples
-        if legends is None and self.legends is None:
+        if not isinstance(samples, QtCore.QModelIndex) and not isinstance(legends, QtCore.QModelIndex):
+            if samples is not None:
+                self.samples = samples
+            if legends is None and self.legends is None:
                 for k in self.samples:
                     self.legends[k] = Legend(title=k)
-        else:
-            # Fuck the Duck typing.
-            if not isinstance(legends, QtCore.QModelIndex):
+            else:
                 self.legends = legends
-        self._stack.pop()
-        self._higson._update_higson(self.samples, self.legends)
+            self._stack.pop()
+            self._higson._update_higson(self.samples, self.legends)
 
 
 class HigsonPlotter(QtCore.QObject):
