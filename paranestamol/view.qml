@@ -18,15 +18,9 @@ ApplicationWindow {
 	minimumWidth: 400
 	height: 600
 	minimumHeight: 200
-	Material.theme: Material.Dark
-	Material.accent: Material.Orange
-	ListModel{
-		id: samplesFiles
-	}
 	function displayPythonMessage(msg){
 		statusBar.text = msg
 	}
-
 	FileDialog{
 		id: fileBrowse
 		title: qsTr("Please choose the samples root file")
@@ -94,7 +88,7 @@ ApplicationWindow {
 			title: qsTr("View Samples")
 			visible: samplesModel.rowCount()
 			FigureCanvas {
-				id: mplView
+				id: triangleView
 				anchors.left: parent.left
 				anchors.leftMargin: 8
 				anchors.top: parent.top
@@ -114,9 +108,9 @@ ApplicationWindow {
 				orientation: Qt.Vertical
 				width: 60
 				anchors.right: parent.right
-				anchors.top: mplView.top
+				anchors.top: triangleView.top
 				anchors.bottom: parent.bottom
-				anchors.left: mplView.right
+				anchors.left: triangleView.right
 			}
 			Manipulator{
 				id: logL
@@ -127,9 +121,9 @@ ApplicationWindow {
 				objectName: 'logl_slider'
 				text: 'logL'
 				height: 40
-				anchors.left: mplView.left
-				anchors.top: mplView.bottom
-				anchors.right: mplView.right
+				anchors.left: triangleView.left
+				anchors.top: triangleView.bottom
+				anchors.right: triangleView.right
 			}
 			FigureCanvas{
 				id: higson		/*It should be capital, but you have*/
@@ -141,8 +135,8 @@ ApplicationWindow {
 				objectName: 'higsonPlot'
 			}
 			Button{
-				anchors.top: mplView.top
-				anchors.left: mplView.left
+				anchors.top: triangleView.top
+				anchors.left: triangleView.left
 				width: 50
 				height: 50
 				text: '⋮'
