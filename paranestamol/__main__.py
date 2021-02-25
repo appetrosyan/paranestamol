@@ -17,41 +17,16 @@ from .plt_managers import TrianglePlotter
 
 PROJECT_PATH = os.path.dirname(os.path.realpath(__name__))
 
-
-class MyApp(QtCore.QObject, object):
-    def __init__(self, live, parent=None, engine=None, rootFile='./main.qml'):
-        super(MyApp, self).__init__(parent)
-        self.engine = QtQml.QQmlApplicationEngine() if engine is None else engine
-        self.engine.addImportPath(PROJECT_PATH)
-        if live:
-            try:
-                from livecoding import start_livecoding_gui
-                start_livecoding_gui(self.engine, PROJECT_PATH, __file__, live_qml=rootFile)
-            except ImportError:
-                print("Cannot do Live coding. ")
-                sys.exit()
-        else:
-            self.engine.load(rootFile)
-        self._start_check_timer()
-
-    def _start_check_timer(self):
-        self._timer = QtCore.QTimer()
-        self._timer.timeout.connect(lambda: None)
-        self._timer.start(100)   
-
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="""Paranestamol, the graphical nested sampling visualisation script."""
-    )
-    parser.add_argument(
-        '-l',
-        '--live',
-        help='Start the application in live editing mode', action='store_true'
+        prog='paranestamol',
+        description="""Paranestamol, the graphical nested sampling visualisation script.""",
+        usage='python3 -m %(prog)s [options]'
     )
 
-    # parser.add_argument(
-        # 'file_roots', metavar='N', type=str, nargs='+', help='Add the following file to the file root'
-    # )
+    parser.add_argument(
+        'file_roots', metavar='file root(s)', type=str, nargs='*', help='Add the following file to the file root'
+    )
     return parser.parse_args()
 
 
@@ -61,6 +36,12 @@ def appSetup(name):
     app.setOrganizationDomain(f"{name}.org")
     app.setApplicationName(f"{name}")
     return app
+
+def makeFilterable(model):
+    proxy = QtCore.QSortFilterProxyModel()
+    proxy.setSourceModel(model)
+    proxy.setFilterRole(ParameterModel.nameRole)
+    return proxy
 
 def main():
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
@@ -76,18 +57,15 @@ def main():
     samplesModel = SamplesModel()
     displayBridge.paramsModel = paramsModel
 
-    proxy = QtCore.QSortFilterProxyModel()
-    proxy.setSourceModel(paramsModel)
-    proxy.setFilterRole(ParameterModel.nameRole)
-
     context.setContextProperty("displayBridge", displayBridge)
-    context.setContextProperty('paramsModel', proxy)
+    context.setContextProperty('paramsModel', makeFilterable(paramsModel))
     context.setContextProperty("samplesModel", samplesModel)
 
     qmlFileRoot =str(Path(Path.cwd(), Path(__file__).parent, "view.qml"))
-    gui = MyApp(live=args.live, engine=engine, rootFile=qmlFileRoot)
+    engine.addImportPath(PROJECT_PATH)
+    engine.load(qmlFileRoot)
     
-    win = gui.engine.rootObjects()[0]
+    win = engine.rootObjects()[0]
     displayBridge.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
     displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot")
 
