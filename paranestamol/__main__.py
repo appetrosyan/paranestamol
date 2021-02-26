@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-r"""This is the main file for invoking the paranestamol binary. If you
-want to adjust the QML with live updates, please use `python3 -m
-paranestamol --live` as your invocation.
+r"""This is the main file for invoking the paranestamol application.
 
 """
 import sys
@@ -23,7 +21,6 @@ def parse_args():
         description="""Paranestamol, the graphical nested sampling visualisation script.""",
         usage='python3 -m %(prog)s [options]'
     )
-
     parser.add_argument(
         'file_roots', metavar='file root(s)', type=str, nargs='*', help='Add the following file to the file root'
     )
@@ -64,11 +61,10 @@ def main():
     qmlFileRoot =str(Path(Path.cwd(), Path(__file__).parent, "view.qml"))
     engine.addImportPath(PROJECT_PATH)
     engine.load(qmlFileRoot)
-    
+
     win = engine.rootObjects()[0]
     displayBridge.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
     displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot")
-
     displayBridge.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
     samplesModel.fullRepaint.connect(displayBridge.reDraw)
@@ -76,14 +72,19 @@ def main():
     paramsModel.dataChanged.connect(displayBridge.reDraw)
     paramsModel.dataChanged.connect(displayBridge.invalidateCache)
 
-    
     temperatureSlider = win.findChild(QtCore.QObject, "temperature_slider")
-    # temperatureSlider.valueChangeFinished\
-    #                  .connect(displayBridge.changeTemperature)
     temperatureSlider.valueChangeStarted\
                      .connect(displayBridge.changeTemperature)
     loglSlider = win.findChild(QtCore.QObject, "logl_slider")
     loglSlider.valueChangeStarted.connect(displayBridge.changeLogL)
+
+
+    for x in args.file_roots:
+        try:
+            samplesModel.appendRow(x)
+        except FileNotFoundError as e:
+            print(f'{e}', file=sys.stderr)
+            samplesModel.notify.emit(f"Error: {e}")
     sys.exit(app.exec_())
 
 
