@@ -59,7 +59,7 @@ class TrianglePlotter(QtCore.QObject):
         return self._higson.beta
 
     @beta.setter
-    def beta(self, other):
+    def beta(self, other: float):
         self._higson.beta = other
 
     @property
@@ -98,7 +98,7 @@ class TrianglePlotter(QtCore.QObject):
         fig.set_canvas(self.triCanvas)
         self.triCanvas.draw_idle()
 
-    def request_update_triangle(self, post=None, logL=-1):
+    def request_update_triangle(self, post=None, logL: float =-1):
         fig = self.triCanvas.figure
         figsize = fig.get_figwidth(), fig.get_figheight()
         self.reqNewTriangle.emit(Figure(figsize=figsize),
