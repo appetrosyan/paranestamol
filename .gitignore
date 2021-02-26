@@ -8,3 +8,4 @@
 /dist/
 /.MANIFEST.in.kak.P8LcWs
 /paranestamol.egg-info/
+*.py#
