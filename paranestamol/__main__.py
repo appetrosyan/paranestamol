@@ -43,10 +43,9 @@ def main():
 
     engine = QtQml.QQmlApplicationEngine()
     context = engine.rootContext()
-    displayBridge = TrianglePlotter()
     paramsModel = ParameterModel()
     samplesModel = SamplesModel()
-    displayBridge.paramsModel = paramsModel
+    displayBridge = TrianglePlotter(paramsModel)
 
     context.setContextProperty("displayBridge", displayBridge)
     proxy = QtCore.QSortFilterProxyModel()
@@ -61,7 +60,7 @@ def main():
 
     win = engine.rootObjects()[0]
     displayBridge.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
-    displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot")
+    displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot") 
     displayBridge.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
     samplesModel.fullRepaint.connect(displayBridge.reDraw)

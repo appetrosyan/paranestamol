@@ -35,13 +35,13 @@ class TrianglePlotter(QtCore.QObject):
     paramsChanged = QtCore.Signal()
     reqNewTriangle = QtCore.Signal(object, object, object, object, object, float)
 
-    def __init__(self, parent=None):
+    def __init__(self, paramsModel, parent=None):
         super().__init__(parent)
         self.logL = -1
-        self.legends = {}
+        self.paramsModel = paramsModel
+        self.legends = dict()
         self.samples = dict()
-        self.paramsModel = None
-        self._LCache = {}
+        self._LCache = dict()
         self._higson = HigsonPlotter()
         self._stack = ThreadedStackBuffer()
         self._thread = QtCore.QThread(parent=self)
