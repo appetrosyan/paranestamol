@@ -75,7 +75,6 @@ def main():
     loglSlider = win.findChild(QtCore.QObject, "logl_slider")
     loglSlider.valueChangeStarted.connect(displayBridge.changeLogL)
 
-
     for x in args.file_roots:
         try:
             samplesModel.appendRow(x)
