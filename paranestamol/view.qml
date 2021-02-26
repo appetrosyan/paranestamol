@@ -89,12 +89,8 @@ ApplicationWindow {
 			visible: !samplesModel.isEmpty
 			FigureCanvas {
 				id: triangleView
-				anchors.left: parent.left
-				anchors.leftMargin: 8
-				anchors.top: parent.top
-				anchors.right: temperature.left
-				implicitWidth: 700
-				height: 500
+				height: parent.height - higson.height - 40 
+				width: parent.width - temperature.width 
 				objectName : "trianglePlot"
 			}
 			Manipulator{
@@ -109,9 +105,8 @@ ApplicationWindow {
 				orientation: Qt.Vertical
 				width: 60
 				anchors.right: parent.right
-				anchors.top: triangleView.top
+				anchors.top: parent.top
 				anchors.bottom: parent.bottom
-				anchors.left: triangleView.right
 			}
 			Manipulator{
 				id: logL
@@ -122,20 +117,21 @@ ApplicationWindow {
 				objectName: 'logl_slider'
 				text: 'logL'
 				height: 40
-				anchors.left: triangleView.left
-				anchors.top: triangleView.bottom
-				anchors.right: triangleView.right
+				anchors.left: parent.left
+				anchors.right: temperature.left
+				anchors.bottom: higson.top
 			}
 			FigureCanvas{
-				id: higson		/*It should be capital, but you have*/
-				anchors.top: logL.bottom		 /* to follow the convention*/
+				id: higson
 				height: 100
+				anchors.left: parent.left
 				anchors.bottom: parent.bottom
-				anchors.left: logL.left
-				anchors.right: logL.right
+				anchors.right: temperature.left
 				objectName: 'higsonPlot'
 			}
 			Button{
+				anchors.topMargin: 8
+				anchors.leftMargin: 14
 				anchors.top: triangleView.top
 				anchors.left: triangleView.left
 				width: 50
@@ -197,7 +193,8 @@ ApplicationWindow {
 	footer: Text{
 		id: statusBar
 		text: "Status"
-		font.bold: true
+		anchors.left: parent.left
+		anchors.leftMargin: 8
 	}
 }
 

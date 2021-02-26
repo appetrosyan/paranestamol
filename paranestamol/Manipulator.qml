@@ -14,50 +14,20 @@ Item{
 	property alias value: currentValue.value
 	property var trans: a => a
 	property var invtrans: a=>a
-	Item{
-		id: info
-		width: Math.max(marker.width, currentValue.width)
-		height: marker.implicitHeight + currentValue.implicitHeight
-		Text{
-			id: marker
-			anchors.top: parent.top
-			anchors.horizontalCenter: parent.horizontalCenter
-			font.bold: true
-		}
-		TextInput{
-			id: currentValue
-			text: "%1".arg(Math.round(trans(slider.value)))
-			font.bold: !focus
-			property var value: trans(slider.value)
-			anchors.topMargin: 20
-			anchors.top: marker.bottom
-			anchors.horizontalCenter: parent.horizontalCenter
-			anchors.bottom: parent.bottom
-			onTextChanged: {
-				valueChangeStarted(parseInt(text))
-			}
-			onAccepted: {
-				slider.value = invtrans(parseFloat(text))
-				valueChangeFinished(parseInt(text))
-			}
-		}
+	Text{
+		id: marker
+		width: 30
 		Component.onCompleted: {
-			if (slider.horizontal) {
+			if (slider.orientation === Qt.Horizontal) {
 				anchors.left = parent.left
+				anchors.leftMargin = 8
 				anchors.verticalCenter = parent.verticalCenter
-				
-			}
-			else{
-				anchors.top= parent.top
+			} else {
+				anchors.topMargin = 8
+				anchors.top = parent.top
+				anchors.topMargin = 8
 				anchors.horizontalCenter = parent.horizontalCenter
-				
-			}
-		}
-		MouseArea{
-			anchors.fill: parent
-			onClicked: {
-				currentValue.focus=true
-			}
+			}	
 		}
 	}
 	Slider{
@@ -69,14 +39,41 @@ Item{
 		stepSize: 1
 		Component.onCompleted: {
 			if (orientation === Qt.Horizontal){
-				anchors.top = parent.top
-				anchors.left = info.right
-				anchors.right = parent.right
+				anchors.left = marker.right
+				anchors.leftMargin = 4
+				anchors.right = currentValue.left
+				anchors.rightMargin = 8
+				anchors.verticalCenter = marker.verticalCenter
 			} else {
-				anchors.top = info.bottom
-				anchors.horizontalCenter = info.horizontalCenter // Why doesn't this FUCKING WORK!
+				anchors.top = marker.bottom
+				anchors.topMargin = 8
+				anchors.horizontalCenter = marker.horizontalCenter // Why doesn't this FUCKING WORK!
+				anchors.bottom = currentValue.top
+				anchors.bottomMargin = 8
 			}
-			anchors.bottom = parent.bottom
+		}
+	}
+	TextInput{
+		id: currentValue
+		text: "%1".arg(Math.round(trans(slider.value)))
+		font.bold: focus
+		property var value: trans(slider.value)
+		onTextChanged: {
+			valueChangeStarted(parseInt(text))
+		}
+		onAccepted: {
+			slider.value = invtrans(parseFloat(text))
+			valueChangeFinished(parseInt(text))
+		}
+		Component.onCompleted: {
+			if (slider.orientation === Qt.Horizontal){
+				anchors.right = parent.right
+				anchors.rightMargin = 8
+				anchors.verticalCenter = slider.verticalCenter
+			} else {
+				anchors.bottom = parent.bottom
+				anchors.horizontalCenter = parent.horizontalCenter
+			}
 		}
 	}
 }
