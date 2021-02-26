@@ -23,6 +23,7 @@ def updateTrianglePlot(figure, params, tex, samples, legends, logL):
     handles, labels = axes[params[0]][params[1]]\
         .get_legend_handles_labels()
     figure.legend(handles, labels)
+    # print(axes[params[0]][params[0]].patches)
     return figure
 
 
@@ -58,7 +59,6 @@ class TrianglePlotter(QtCore.QObject):
     def beta(self, other):
         self._higson.beta = other
 
-
     @property
     def higCanvas(self):
         return self._higson.higCanvas()
@@ -83,6 +83,8 @@ class TrianglePlotter(QtCore.QObject):
             if self.logL == logL:
                 self._updateTriangleFigure(self._LCache[logL])
         else:
+            while self._worker.busy:
+                pass
             self._invalidating = False
                 
 
