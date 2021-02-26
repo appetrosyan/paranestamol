@@ -147,7 +147,6 @@ ApplicationWindow {
 					id: paramsPopup
 					width: 160
 					height: 200
-
 					TextField{
 						id: filter
 						width: parent.width
