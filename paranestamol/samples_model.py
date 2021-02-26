@@ -122,7 +122,7 @@ class SamplesModel(QtCore.QAbstractListModel):
 
     def _maxLogL(self):
         try: 
-            return ceil(max(self.samples[x].logL.max() for x in self.samples))
+            return max(self.samples[x].logL.max() for x in self.samples)
         except ValueError:
             return 0
 
