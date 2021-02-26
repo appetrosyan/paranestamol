@@ -198,6 +198,7 @@ class ThreadedPlotter(QtCore.QObject):
     finished = QtCore.Signal(float, object)
 
     @QtCore.Slot(object, object, object, object, object, float)
+    @QtCore.Slot(object, object, object, object, object, float, object)
     def plot_triangle(self, *args):
         self.busy=True
         fig = updateTrianglePlot(*args)
