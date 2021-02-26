@@ -7,8 +7,13 @@ import numpy as np
 from multiprocessing import Pool
 
 
-def updateTrianglePlot(figure, params, tex, samples, legends, logL):
+def updateTrianglePlot(figure, params, tex, samples, legends, logL, kinds=None):
     figure, axes = make_2d_axes(params, tex=tex, fig=figure, upper=False)
+    if kinds is None:
+        kinds = {
+            'lower': 'scatter',
+            'diagonal': 'hist',
+        }
     for x in samples:
         samples[x]\
             .live_points(logL)\
@@ -16,10 +21,7 @@ def updateTrianglePlot(figure, params, tex, samples, legends, logL):
                      alpha=legends[x].alpha,
                      color=legends[x].color,
                      label=legends[x].title,
-                     types={
-                         'lower': 'scatter',
-                         'diagonal': 'hist',
-                     })
+                     types=kinds)
     handles, labels = axes[params[0]][params[1]]\
         .get_legend_handles_labels()
     figure.legend(handles, labels)
