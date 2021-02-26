@@ -1,12 +1,34 @@
 About
 =====
 
-This is a GUI for anesthetic.
+A graphical front-end for
+[anesthetic](https://github.com/williamjameshandley/anesthetic),
+designed to allow more efficient observation of what goes on in a
+nested sampling run. As this is a thin wrapper around anesthetic, it
+supports all of the sampling formats supported by anesthetic, and
+*only* those formats. 
+
+The main benefit over using the `anesthetic.gui()` in your scripts is
+the improved responsiveness of the graphical user interface, and the
+ability to overlay multiple nested sampling plots on top of each
+other. There are certain creature comforts included too, like the
+ability to alter the colours and display names of the sampling
+runs. Additionally, an indexed filter is added to conveniently sort
+through the parameters found in the runs. 
+
+
 
 Install
 =======
 
 Base version
+-----------
+
+```{.bash}
+python3 -m pip install paranestamol
+```
+
+Devel version
 ------------
 
 ``` {.bash}
@@ -15,51 +37,36 @@ cd paranestamol
 python3 setup.py
 ```
 
-Async updating version
-----------------------
 
-Careful, here be dragons. This version is much faster, and more
-responsive, but it also crashes occasionally. Until I track down the
-segfault, use at own risk.
-
-``` {.bash}
-git clone https://github.com/appetrosyan/paranestamol.git
-cd paranestamol
-git checkout async-plotting
-python3 setup.py
-```
 
 Usage
 =====
 
+`paranestamol` is a graphical application written in QtQuick using
+PySide2 (for now). It can be used standalone, or be passed a
+command-line (positional) argument containing the file root, or any of
+the files belonging to the raw output of your chosen nested sampler,
+e.g. [PolyChord](https://github.com/PolyChord/PolyChordLite)
+
+
 ``` {.bash}
-python3 -m paranestamol
-```
+python3 -m paranestamol [file_root] 
 
-Should give you a gui.
 
-On the first window, you can browse for a chains file, or you can just
-drag and drop (whichever you find easier). Loading takes a minute. After
-that you\'ll see a list of the loaded chain roots.
+Planned features
+==============
 
-Here you can click on the checkbox to turn off rendering of a chain. You
-can see the Bayesian model dimensionality, and the Kullback-Leibler
-Divergence, along with the evidence.
+- Integration with [nestcheck](https://github.com/ejhigson/nestcheck) 
 
-To change the legend appearance. Just click in the list, either on the
-legend rectangle, or the text. Make your changes, including changing the
-opacity of the chain you selected. On hitting enter, the view gets
-updated.
+- Ability to save the plot(s) to a file
 
-The plots are presented on the right. As of now `nestcheck` integration
-is underway, but not usable. This means that the usual Higson plot that
-is in `anesthetic.gui()` is not yet production ready.
+- Ability to save and recall the opened nested sampling runs. 
 
-Missing features.
-=================
+- Ability to define new parameters, and alter the LaTeX representation
+  of the older ones.
+  
+- Separate log-likelihood sliders for each data-series. 
 
--   File hot-reload.
--   `nestcheck` integration
--   Memory-efficient caching.
--   Efficient plot updates
--   A better canvas than matplotlib.
+- Memory-efficient implementation of the alteration-related
+  repaints. Right now `paranestamol` caches entire figures.
+
