@@ -101,7 +101,7 @@ ApplicationWindow {
 				objectName: 'temperature_slider'
 				text: 'beta'
 				trans: a => Math.exp(a)
-				invtrans: a=> Math.log(a)
+				invtrans: a => Math.log(a)
 				orientation: Qt.Vertical
 				width: 60
 				anchors.right: parent.right

@@ -10,7 +10,6 @@ Item{
 		id: palette
 		colorGroup: SystemPalette.Active
 	}
-
 	SystemPalette{
 		id: disabledPalette
 		colorGroup: SystemPalette.Disabled
@@ -46,17 +45,17 @@ Item{
 			onClicked: {
 				browseForFile()
 			}
-				text: qsTr("Browse...")
-			}
-			Button{
-				id: loadButton
-				visible: fileRootBox.text!==''
-				onClicked:{
-					requestLoadSamples(fileRootBox.text)
-				}
-				text: qsTr("Load samples")
-			}
+			text: qsTr("Browse...")
 		}
+		Button{
+			id: loadButton
+			visible: fileRootBox.text!==''
+			onClicked:{
+				requestLoadSamples(fileRootBox.text)
+			}
+			text: qsTr("Load samples")
+		}
+	}
 	Rectangle{
 		DropArea {
 			anchors.fill: parent
