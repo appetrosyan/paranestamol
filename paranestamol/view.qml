@@ -92,8 +92,9 @@ ApplicationWindow {
 				anchors.left: parent.left
 				anchors.leftMargin: 8
 				anchors.top: parent.top
+				anchors.right: temperature.left
 				implicitWidth: 700
-				height: 400
+				height: 500
 				objectName : "trianglePlot"
 			}
 			Manipulator{
