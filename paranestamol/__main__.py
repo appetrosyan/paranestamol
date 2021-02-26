@@ -34,12 +34,6 @@ def appSetup(name):
     app.setApplicationName(f"{name}")
     return app
 
-def makeFilterable(model):
-    proxy = QtCore.QSortFilterProxyModel()
-    proxy.setSourceModel(model)
-    proxy.setFilterRole(ParameterModel.nameRole)
-    return proxy
-
 def main():
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
@@ -55,10 +49,13 @@ def main():
     displayBridge.paramsModel = paramsModel
 
     context.setContextProperty("displayBridge", displayBridge)
-    context.setContextProperty('paramsModel', makeFilterable(paramsModel))
+    proxy = QtCore.QSortFilterProxyModel()
+    proxy.setSourceModel(paramsModel)
+    proxy.setFilterRole(ParameterModel.nameRole)
+    context.setContextProperty('paramsModel', proxy)
     context.setContextProperty("samplesModel", samplesModel)
 
-    qmlFileRoot =str(Path(Path.cwd(), Path(__file__).parent, "view.qml"))
+    qmlFileRoot = str(Path(Path.cwd(), Path(__file__).parent, "view.qml"))
     engine.addImportPath(PROJECT_PATH)
     engine.load(qmlFileRoot)
 
