@@ -86,7 +86,7 @@ ApplicationWindow {
 		Page {
 			id: samplesView
 			title: qsTr("View Samples")
-			visible: samplesModel.rowCount()
+			visible: !samplesModel.isEmpty
 			FigureCanvas {
 				id: triangleView
 				anchors.left: parent.left
@@ -115,7 +115,7 @@ ApplicationWindow {
 			Manipulator{
 				id: logL
 				from: samplesModel.minLogL
-				stepSize: (-1 - samplesModel.minLogL)/30
+				stepSize: (-1 - samplesModel.minLogL)/60
 				to: -1
 				value: -1
 				objectName: 'logl_slider'

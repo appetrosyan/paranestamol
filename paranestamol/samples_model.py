@@ -16,6 +16,13 @@ class ParameterModel(QtCore.QAbstractListModel):
     texRole = QtCore.Qt.UserRole + 1000 + 1
     selectedRole = QtCore.Qt.UserRole + 1000 + 2
 
+    isEmptyChanged = QtCore.Signal()
+
+    def _isEmpty(self):
+        return self.rowCount() < 1
+
+    isEmpty = QtCore.Property(bool, _isEmpty, notify=isEmptyChanged)
+
     def __init__(self, parent=None, columns=[], tex={}):
         super(ParameterModel, self).__init__(parent)
         self.names = columns
@@ -52,6 +59,7 @@ class ParameterModel(QtCore.QAbstractListModel):
         self.tex[name] = tex
         if show:
             self.displayNames.add(name)
+        self.isEmptyChanged.emit()
 
 
     @QtCore.Slot(object, object)
@@ -65,7 +73,7 @@ class ParameterModel(QtCore.QAbstractListModel):
         for name in self.names:
             try:
                 self.tex[name] = tex[name]
-            except:
+            except KeyError:
                 self.tex[name] = name
         if self.displayNames == {}:
             self.displayNames = set(self.names[:3])
@@ -117,9 +125,17 @@ class SamplesModel(QtCore.QAbstractListModel):
             return ceil(max(self.samples[x].logL.max() for x in self.samples))
         except ValueError:
             return 0
+
+    isEmptyChanged = QtCore.Signal()
+
+    def _isEmpty(self):
+        return not self.hasChildren()
+
+    isEmpty = QtCore.Property(bool, _isEmpty, notify=isEmptyChanged)
     
     minLogL = QtCore.Property(float, _minLogL, notify=minLogLChanged)
     maxLogL = QtCore.Property(float, _maxLogL, notify=maxLogLChanged)
+    
 
     # Roles, i.e. properties for each model element
     nameRole = QtCore.Qt.UserRole + 1000 + 0
@@ -163,22 +179,16 @@ class SamplesModel(QtCore.QAbstractListModel):
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
             item = self.samples[self.names[index.row()]]
-
             if role == SamplesModel.nameRole:
                 return self.names[index.row()]
-
             if role == SamplesModel.urlRole:
                 return item.root
-
             if role == SamplesModel.legendNameRole:
                 return self.legends[self.names[index.row()]].title
-
             if role == SamplesModel.legendColorRole:
                 return self.legends[self.names[index.row()]].color
-
             if role == SamplesModel.displayRole:
                 return self.names[index.row()] in self.displayed_names
-
             if role == SamplesModel.samplesTypeRole:
                 if isinstance(item, NestedSamples):
                     return 'NestedSamples'
@@ -186,7 +196,6 @@ class SamplesModel(QtCore.QAbstractListModel):
                     return 'MCMCSamples'
             if role == SamplesModel.legendAlphaRole:
                 return self.legends[self.names[index.row()]].alpha
-
             if role == SamplesModel.bmdRole:
                 return float(self.samples[self.names[index.row()]].d())
             if role == SamplesModel.dklRole:
@@ -208,11 +217,11 @@ class SamplesModel(QtCore.QAbstractListModel):
             self.samples[basename(rt)] = samples
             self.newParams.emit(samples.columns, samples.tex)
             self.displayed_names.add(basename(rt))
-            # self.rowCountChanged.emit(len(self.samples), len(self.samples)+1)
             self.endInsertRows()
             self.minLogLChanged.emit()
             self.maxLogLChanged.emit()
-            self.reqRepaint()
+            self.requestRepaint()
+            self.isEmptyChanged.emit()
         else:
             self.notify.emit(f'Samples: {basename(rt)} - already loaded.')
 
@@ -224,7 +233,9 @@ class SamplesModel(QtCore.QAbstractListModel):
                QtCore.Qt.ItemIsEnabled | \
                QtCore.Qt.ItemIsSelectable
 
-    def reqRepaint(self):
+    def requestRepaint(self):
+        # TODO this should be broken down into specific kinds of adjustments
+        # and individual signals that need to be handled. 
         samples = {k: self.samples[k] for k in self.displayed_names}
         legends = {k: self.legends[k] for k in self.displayed_names}
         self.fullRepaint.emit(samples, legends)
@@ -233,18 +244,18 @@ class SamplesModel(QtCore.QAbstractListModel):
         if role == SamplesModel.legendNameRole:
             self.legends[self.names[index.row()]].title = value
             self.dataChanged.emit(index, index)
-            self.reqRepaint()
+            self.requestRepaint()
             return True
         if role == SamplesModel.legendColorRole:
             self.legends[self.names[index.row()]].color = value.name()
             self.legends[self.names[index.row()]].alpha = value.alphaF()
             self.dataChanged.emit(index, index)
-            self.reqRepaint()
+            self.requestRepaint()
             return True
         if role == SamplesModel.legendAlphaRole:
             self.legends[self.names[index.row()]].alpha = value
             self.dataChanged.emit(index, index)
-            self.reqRepaint()
+            self.requestRepaint()
             return True
         if role == SamplesModel.displayRole:
             name = self.names[index.row()]
@@ -256,7 +267,7 @@ class SamplesModel(QtCore.QAbstractListModel):
                     self.displayed_names.add(name)
                 else:
                     self.displayed_names.remove(name)
-                self.reqRepaint()
+                self.requestRepaint()
                 return True
         else:
             return False
@@ -264,7 +275,7 @@ class SamplesModel(QtCore.QAbstractListModel):
     
 
     def __init__(self, parent=None, names=[], samples={}):
-        super(SamplesModel, self).__init__(parent)
+        super().__init__(parent)
         self.names = names
         self.samples = samples
         self.legends = {}
