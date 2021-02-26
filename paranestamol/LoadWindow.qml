@@ -10,6 +10,11 @@ Item{
 		id: palette
 		colorGroup: SystemPalette.Active
 	}
+
+	SystemPalette{
+		id: disabledPalette
+		colorGroup: SystemPalette.Disabled
+	}
 	property var fileModel
 	property alias fileName: fileRootBox.text
 	signal browseForFile()
@@ -178,7 +183,14 @@ Item{
 			}
 			highlightFollowsCurrentItem: true
 			focus: true
+			Text{
+				text: qsTr("<i> Empty </i>")
+				anchors.centerIn: parent
+				visible: fileModel.isEmpty
+				color: disabledPalette.text
+			}
 		}
+		
 	}
 	
 }
