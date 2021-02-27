@@ -51,7 +51,7 @@ e.g. [PolyChord](https://github.com/PolyChord/PolyChordLite)
 
 ``` {.bash}
 python3 -m paranestamol [file_root] 
-
+```
 
 Planned features
 ==============
