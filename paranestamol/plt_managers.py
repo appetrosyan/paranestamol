@@ -1,10 +1,10 @@
-from matplotlib_backend_qtquick.qt_compat import QtCore
+"""The plotting and updating logic is hanlded in this file"""
 from matplotlib.figure import Figure
 from anesthetic import make_2d_axes
 # import pathos.pools as pp
-from .samples_model import Legend
 import numpy as np
-from multiprocessing import Pool
+
+from paranestamol import Legend, QtCore
 
 
 def updateTrianglePlot(figure, params, tex, samples, legends, logL, kinds=None):
@@ -31,12 +31,14 @@ def updateTrianglePlot(figure, params, tex, samples, legends, logL, kinds=None):
 
 
 class TrianglePlotter(QtCore.QObject):
+    """The class that handles the creation of the Plotting thread, the
+plotting stack, and all changes of the GUI sliders."""
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
     reqNewTriangle = QtCore.Signal(object, object, object, object, object, float, object)
     lowerTypeChanged = QtCore.Signal()
     diagonalTypeChanged = QtCore.Signal()
-    
+
 
     def __init__(self, paramsModel, parent=None):
         super().__init__(parent)
@@ -65,6 +67,7 @@ class TrianglePlotter(QtCore.QObject):
     def get_lowerType(self):
         return self.plotTypes['lower']
 
+
     def set_lowerType(self, other):
         if other in {"kde", "scatter", "fastkde"}:
             self.plotTypes['lower'] = other
@@ -72,50 +75,63 @@ class TrianglePlotter(QtCore.QObject):
         else:
             raise ValueError(f'{other} lower plot type is not recognised. ')
 
-    lowerType= QtCore.Property(str, fget=get_lowerType, fset=set_lowerType, notify=lowerTypeChanged)
 
+    lowerType = QtCore.Property(str,
+                                fget=get_lowerType,
+                                fset=set_lowerType,
+                                notify=lowerTypeChanged)
 
     def get_diagonalType(self):
         return self.plotTypes['diagonal']
 
+
     def set_diagonalType(self, other):
-        if other in {'kde', 'hist', # 'astropyhist'
-                     }:
+        if other in {'kde', 'hist'}:
             self.plotTypes['diagonal'] = other
             self.reDraw()
         else:
             raise ValueError(f'{other} diagonal plot type is not recognised. ')
 
-    diagonalType = QtCore.Property(str, fget=get_diagonalType, fset=set_diagonalType, notify=diagonalTypeChanged)
+
+    diagonalType = QtCore.Property(str,
+                                   fget=get_diagonalType,
+                                   fset=set_diagonalType,
+                                   notify=diagonalTypeChanged)
 
     @property
     def beta(self):
         return self._higson.beta
 
+
     @beta.setter
     def beta(self, other: float):
         self._higson.beta = other
+
 
     @property
     def higCanvas(self):
         return self._higson.higCanvas()
 
+
     @higCanvas.setter
     def higCanvas(self, other):
         self._higson.higCanvas = other
+
 
     @property
     def params(self):
         return list(self.paramsModel.displayNames)
 
+
     @property
     def tex(self):
         return self.paramsModel.tex
-    
+
+
     @QtCore.Slot(float, object)
     def cacheTriangleFigure(self, logL, fig):
         self._stack.pop()
-        if not self._invalidating: 
+        if not self._invalidating:
             self._LCache[logL] = fig
             if self.logL == logL:
                 self._updateTriangleFigure(self._LCache[logL])
@@ -131,6 +147,7 @@ class TrianglePlotter(QtCore.QObject):
         self.triCanvas.figure = fig
         fig.set_canvas(self.triCanvas)
         self.triCanvas.draw_idle()
+
 
     def request_update_triangle(self, post=None, logL: float =-1):
         fig = self.triCanvas.figure
@@ -151,6 +168,7 @@ class TrianglePlotter(QtCore.QObject):
             self.request_update_triangle(logL=x)
         self._stack.pop()
 
+
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
         self.logL = logL
@@ -163,10 +181,12 @@ class TrianglePlotter(QtCore.QObject):
         else:
             self.request_update_triangle(logL= self.logL)
 
+
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
         self._higson._update_higson(self.samples, self.legends)
+
 
     @QtCore.Slot()
     @QtCore.Slot(object)
@@ -191,17 +211,21 @@ class HigsonPlotter(QtCore.QObject):
         self._beta = 1
         self._cache = {}
 
+
     @property
     def beta(self):
         return self._beta
+
 
     @beta.setter
     def beta(self, other):
         self._beta = other
 
+
     @property
     def higCanvas(self):
         return self._higCanvas
+
 
     @higCanvas.setter
     def higCanvas(self, other):
@@ -213,6 +237,7 @@ class HigsonPlotter(QtCore.QObject):
         self.ax.set_xlabel(r'$\log X$')
         self.ax.set_ylabel(r'$LX$', labelpad=-30)
         self.higCanvas.figure.set_tight_layout({'pad': 0})
+
 
     def _update_higson(self, samples, legends):
         self.ax.lines.clear()
@@ -232,35 +257,40 @@ class HigsonPlotter(QtCore.QObject):
             self.ax.plot(logX[::-1], LX, color=legends[x].color)
         self.higCanvas.draw_idle()
 
+
 class ThreadedPlotter(QtCore.QObject):
     finished = QtCore.Signal(float, object)
+
 
     @QtCore.Slot(object, object, object, object, object, float)
     @QtCore.Slot(object, object, object, object, object, float, object)
     def plot_triangle(self, *args):
-        self.busy=True
+        self.busy = True
         fig = updateTrianglePlot(*args)
         self.finished.emit(args[-2], fig)
-        self.busy=False
+        self.busy = False
 
 
 class ThreadedStackBuffer(QtCore.QObject):
     popped = QtCore.Signal(object, object, object, object, object, float, object)
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._buffer = []
         self.autopop = True
 
+
     def clear_buffer(self):
         self._buffer = []
 
+
     def pop(self):
         try:
-            self.autopop=False
+            self.autopop = False
             self.popped.emit(*self._buffer.pop())
         except:
-            self.autopop=True
+            self.autopop = True
 
 
     @QtCore.Slot(object, object, object, object, object, float, object)
@@ -268,4 +298,3 @@ class ThreadedStackBuffer(QtCore.QObject):
         self._buffer.append(args)
         if self.autopop:
             self.pop()
-        

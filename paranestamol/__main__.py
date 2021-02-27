@@ -7,38 +7,46 @@ import signal
 import os
 import argparse
 from pathlib import Path
-from matplotlib_backend_qtquick.backend_qtquickagg import FigureCanvasQtQuickAgg
-from matplotlib_backend_qtquick.qt_compat import QtGui, QtQml, QtCore, QtWidgets
 
-from .samples_model import SamplesModel, ParameterModel
-from .plt_managers import TrianglePlotter
+from paranestamol.samples_model import SamplesModel, ParameterModel
+from paranestamol.plt_managers import TrianglePlotter
+from paranestamol import FigureCanvasQML, QtWidgets, QtCore, QtQml
+
 
 PROJECT_PATH = os.path.dirname(os.path.realpath(__name__))
 
+
 def parse_args():
+    """What is on the tin."""
     parser = argparse.ArgumentParser(
         prog='paranestamol',
-        description="""Paranestamol, the graphical nested sampling visualisation script.""",
+        description="Paranestamol, graphical nested sampling visualisation.",
         usage='python3 -m %(prog)s [options]'
     )
     parser.add_argument(
-        'file_roots', metavar='file root(s)', type=str, nargs='*', help='Add the following file to the file root'
+        'file_roots',
+        metavar='file root(s)',
+        type=str, nargs='*',
+        help='Add the following file to the file root'
     )
     return parser.parse_args()
 
 
-def appSetup(name):
+def app_setup(name):
+    """Housekeeping boilerplate"""
     app = QtWidgets.QApplication(sys.argv)
     app.setOrganizationName(f"{name}")
     app.setOrganizationDomain(f"{name}.org")
     app.setApplicationName(f"{name}")
     return app
 
+
 def main():
+    """Boilerplate."""
     signal.signal(signal.SIGINT, lambda *args: QtWidgets.QApplication.quit())
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
-    app = appSetup("Paranestamol")
-    QtQml.qmlRegisterType(FigureCanvasQtQuickAgg, "Backend", 1, 0, "FigureCanvas")
+    app = app_setup("Paranestamol")
+    QtQml.qmlRegisterType(FigureCanvasQML, "Backend", 1, 0, "FigureCanvas")
     args = parse_args()
 
     engine = QtQml.QQmlApplicationEngine()
@@ -60,7 +68,7 @@ def main():
 
     win = engine.rootObjects()[0]
     displayBridge.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
-    displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot") 
+    displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot")
     displayBridge.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
     samplesModel.fullRepaint.connect(displayBridge.reDraw)
@@ -74,12 +82,12 @@ def main():
     loglSlider = win.findChild(QtCore.QObject, "logl_slider")
     loglSlider.valueChangeStarted.connect(displayBridge.changeLogL)
 
-    for x in args.file_roots:
+    for file_root in args.file_roots:
         try:
-            samplesModel.appendRow(x)
-        except FileNotFoundError as e:
-            print(f'{e}', file=sys.stderr)
-            samplesModel.notify.emit(f"Error: {e}")
+            samplesModel.appendRow(file_root)
+        except FileNotFoundError as err:
+            print(f'{err}', file=sys.stderr)
+            samplesModel.notify.emit(f"Error: {err}")
     sys.exit(app.exec_())
 
 
