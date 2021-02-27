@@ -13,4 +13,4 @@ pyside2="*"
 anesthetic = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
