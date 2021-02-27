@@ -50,7 +50,8 @@ ApplicationWindow {
 			interactive: true
 		}
 		ToolButton {
-			visible: mainView.itemAt(mainView.currentIndex+1) && mainView.itemAt(mainView.currentIndex + 1).visible
+			visible: mainView.itemAt(mainView.currentIndex+1) &&
+				mainView.itemAt(mainView.currentIndex + 1).visible
 			text: visible?mainView.itemAt(mainView.currentIndex+1).title:''
 			onClicked: {
 				mainView.incrementCurrentIndex()
@@ -171,7 +172,7 @@ ApplicationWindow {
 									onNewTypeChosen: {
 										displayBridge.lowerType = value
 									}
-									currentIndex: 2
+									currentIndex: 2 // Scatter
 								}
 								PlotSelector{
 									type: "diagonal"
@@ -180,7 +181,7 @@ ApplicationWindow {
 									onNewTypeChosen: {
 										displayBridge.diagonalType = value
 									}
-									currentIndex: 0
+									currentIndex: 0 // Hist
 								}
 							}
 						}
