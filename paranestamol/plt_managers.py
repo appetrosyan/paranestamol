@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 """The plotting and updating logic is hanlded in this file"""
 from matplotlib.figure import Figure
+=======
+from matplotlib_backend_qtquick.qt_compat import QtCore
+import matplotlib.pyplot as plt
+from multiprocessing import Pool
+>>>>>>> origin/async-plotting
 from anesthetic import make_2d_axes
 # import pathos.pools as pp
 import numpy as np
@@ -46,6 +52,7 @@ plotting stack, and all changes of the GUI sliders."""
         self.paramsModel = paramsModel
         self.legends = dict()
         self.samples = dict()
+<<<<<<< HEAD
         self._LCache = dict()
         self._higson = HigsonPlotter()
         self._stack = ThreadedStackBuffer()
@@ -117,6 +124,10 @@ plotting stack, and all changes of the GUI sliders."""
     def higCanvas(self, other):
         self._higson.higCanvas = other
 
+=======
+        self.paramsModel = None
+        self.worker = ScreenPainter(self)
+>>>>>>> origin/async-plotting
 
     @property
     def params(self):
@@ -172,6 +183,7 @@ plotting stack, and all changes of the GUI sliders."""
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
         self.logL = logL
+<<<<<<< HEAD
         if self.logL in self._LCache:
             wh = self.triCanvas.figure.get_size_inches()
             self.triCanvas.figure = self._LCache[self.logL]
@@ -181,12 +193,40 @@ plotting stack, and all changes of the GUI sliders."""
         else:
             self.request_update_triangle(logL= self.logL)
 
+=======
+        self._update()
+>>>>>>> origin/async-plotting
 
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
+<<<<<<< HEAD
         self._higson._update_higson(self.samples, self.legends)
 
+=======
+        self._update()
+
+    def _update(self):
+        self.notify.emit('repainting')
+        w, h = self.canvas.figure.get_figwidth(), self.canvas.figure.get_figheight()
+        self.worker.figure = plt.figure(figsize=(w, h))
+        self.worker.params = self.params
+        self.worker.tex = self.tex
+        self.worker.samples = self.samples
+        self.worker.legends = self.legends
+        self.worker.logL = self.logL
+        self.worker.beta = self.beta
+
+        self.worker.done.connect(self.paintFigure)
+        self.worker.start()
+
+    @QtCore.Slot(object)
+    def paintFigure(self, fig):
+        self.canvas.figure = fig
+        fig.set_canvas(self.canvas)
+        self.canvas.draw_idle()
+        self.notify.emit('View Updated.')
+>>>>>>> origin/async-plotting
 
     @QtCore.Slot()
     @QtCore.Slot(object)
@@ -198,6 +238,7 @@ plotting stack, and all changes of the GUI sliders."""
             if legends is None and self.legends is None:
                 for k in self.samples:
                     self.legends[k] = Legend(title=k)
+<<<<<<< HEAD
             elif legends is not None:
                 self.legends = legends
         self.invalidateCache()
@@ -298,3 +339,49 @@ class ThreadedStackBuffer(QtCore.QObject):
         self._buffer.append(args)
         if self.autopop:
             self.pop()
+=======
+        else:
+            self.legends = legends
+        self._update()
+
+
+def updateTrianglePlot(figure, params, tex, samples, legends,
+                       logL=None, beta=None):
+    figure, axes = make_2d_axes(params, tex=tex, fig=figure)
+    for x in samples:
+        samples[x].plot_2d(axes,
+                           alpha=legends[x].alpha,
+                           color=legends[x].color,
+                           label=legends[x].title)
+
+    handles, labels = axes[params[0]][params[1]]\
+        .get_legend_handles_labels()
+    figure.legend(handles, labels)
+    return figure
+
+
+class ScreenPainter(QtCore.QThread):
+    done = QtCore.Signal(object)
+
+    def __init__(self, parent, figure=None, params=None, tex=None, samples=None,
+                 legends=None, logL=None, beta=None):
+        QtCore.QThread.__init__(self, parent)
+        self.figure = figure
+        self.params = params
+        self.tex = tex
+        self.samples = samples
+        self.legends = legends
+        self.logL = logL
+        self.beta = beta
+
+    def run(self):
+        args = (self.figure, self.params, self.tex,
+                self.samples, self.legends, self.logL,
+                self.beta)
+        # with Pool(1) as p:
+            # fig = p.starmap(updateTrianglePlot, [args])
+        # fig = fig[0]
+        fig = updateTrianglePlot(*args)
+        self.done.emit(fig)
+        self.quit()
+>>>>>>> origin/async-plotting
