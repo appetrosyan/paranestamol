@@ -1,5 +1,4 @@
 import QtQuick 2.12
-import QtQuick.Controls.Material 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Window 2.12
 import QtQuick.Dialogs 1.0
@@ -142,8 +141,8 @@ ApplicationWindow {
 				}
 				Popup{
 					id: paramsPopup
-					width: 160
-					height: 200
+					width: 250
+					height: 300
 					TextField{
 						id: filter
 						width: parent.width
@@ -157,6 +156,34 @@ ApplicationWindow {
 						anchors.right: parent.right
 						anchors.bottom: parent.bottom
 						anchors.left: parent.left
+						header:	Item{
+							anchors.left: parent.left
+							anchors.right: parent.right
+							height: childrenRect.height
+							Column{
+								height: childrenRect.height
+								anchors.left: parent.left
+								anchors.right: parent.right
+								PlotSelector{
+									type: "lower"
+									anchors.left: parent.left
+									anchors.right: parent.right
+									onNewTypeChosen: {
+										displayBridge.lowerType = value
+									}
+									currentIndex: 2
+								}
+								PlotSelector{
+									type: "diagonal"
+									anchors.left: parent.left
+									anchors.right: parent.right
+									onNewTypeChosen: {
+										displayBridge.diagonalType = value
+									}
+									currentIndex: 0
+								}
+							}
+						}
 						delegate: Component{
 							Item{
 								height: selectedBox.height

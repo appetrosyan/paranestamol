@@ -33,7 +33,10 @@ def updateTrianglePlot(figure, params, tex, samples, legends, logL, kinds=None):
 class TrianglePlotter(QtCore.QObject):
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
-    reqNewTriangle = QtCore.Signal(object, object, object, object, object, float)
+    reqNewTriangle = QtCore.Signal(object, object, object, object, object, float, object)
+    lowerTypeChanged = QtCore.Signal()
+    diagonalTypeChanged = QtCore.Signal()
+    
 
     def __init__(self, paramsModel, parent=None):
         super().__init__(parent)
@@ -52,7 +55,38 @@ class TrianglePlotter(QtCore.QObject):
         self._stack.popped.connect(self._worker.plot_triangle)
         self._worker.finished.connect(self.cacheTriangleFigure)
         self._invalidating = False
+        self.plotTypes = {
+            'lower': 'scatter',
+            'diagonal': 'hist',
+        }
 
+
+
+    def get_lowerType(self):
+        return self.plotTypes['lower']
+
+    def set_lowerType(self, other):
+        if other in {"kde", "scatter", "fastkde"}:
+            self.plotTypes['lower'] = other
+            self.reDraw()
+        else:
+            raise ValueError(f'{other} lower plot type is not recognised. ')
+
+    lowerType= QtCore.Property(str, fget=get_lowerType, fset=set_lowerType, notify=lowerTypeChanged)
+
+
+    def get_diagonalType(self):
+        return self.plotTypes['diagonal']
+
+    def set_diagonalType(self, other):
+        if other in {'kde', 'hist', # 'astropyhist'
+                     }:
+            self.plotTypes['diagonal'] = other
+            self.reDraw()
+        else:
+            raise ValueError(f'{other} diagonal plot type is not recognised. ')
+
+    diagonalType = QtCore.Property(str, fget=get_diagonalType, fset=set_diagonalType, notify=diagonalTypeChanged)
 
     @property
     def beta(self):
@@ -85,11 +119,11 @@ class TrianglePlotter(QtCore.QObject):
             self._LCache[logL] = fig
             if self.logL == logL:
                 self._updateTriangleFigure(self._LCache[logL])
+                self.notify.emit("Finished!")
         else:
             while self._worker.busy:
                 pass
             self._invalidating = False
-                
 
 
     @QtCore.Slot(object)
@@ -103,11 +137,12 @@ class TrianglePlotter(QtCore.QObject):
         figsize = fig.get_figwidth(), fig.get_figheight()
         self.reqNewTriangle.emit(Figure(figsize=figsize),
                                  self.params, self.tex,
-                                 self.samples, self.legends, logL)
+                                 self.samples, self.legends, logL, self.plotTypes)
 
     @QtCore.Slot()
     @QtCore.Slot(object, object)
     def invalidateCache(self, *args):
+        self.notify.emit("re-building cache. Please wait.")
         self._invalidating = True
         self._stack.clear_buffer()
         old_cache = self._LCache.keys()
@@ -120,8 +155,10 @@ class TrianglePlotter(QtCore.QObject):
     def changeLogL(self, logL, *args):
         self.logL = logL
         if self.logL in self._LCache:
+            wh = self.triCanvas.figure.get_size_inches()
             self.triCanvas.figure = self._LCache[self.logL]
             self._LCache[self.logL].set_canvas(self.triCanvas)
+            self.triCanvas.figure.set_size_inches(wh)
             self.triCanvas.draw_idle()
         else:
             self.request_update_triangle(logL= self.logL)
@@ -141,10 +178,11 @@ class TrianglePlotter(QtCore.QObject):
             if legends is None and self.legends is None:
                 for k in self.samples:
                     self.legends[k] = Legend(title=k)
-            else:
+            elif legends is not None:
                 self.legends = legends
-            self._stack.pop()
-            self._higson._update_higson(self.samples, self.legends)
+        self.invalidateCache()
+        self._stack.pop()
+        self._higson._update_higson(self.samples, self.legends)
 
 
 class HigsonPlotter(QtCore.QObject):
@@ -202,12 +240,12 @@ class ThreadedPlotter(QtCore.QObject):
     def plot_triangle(self, *args):
         self.busy=True
         fig = updateTrianglePlot(*args)
-        self.finished.emit(args[-1], fig)
+        self.finished.emit(args[-2], fig)
         self.busy=False
 
 
 class ThreadedStackBuffer(QtCore.QObject):
-    popped = QtCore.Signal(object, object, object, object, object, float)
+    popped = QtCore.Signal(object, object, object, object, object, float, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -225,8 +263,9 @@ class ThreadedStackBuffer(QtCore.QObject):
             self.autopop=True
 
 
-    @QtCore.Slot(object, object, object, object, object, float)
+    @QtCore.Slot(object, object, object, object, object, float, object)
     def push(self, *args):
         self._buffer.append(args)
         if self.autopop:
             self.pop()
+        

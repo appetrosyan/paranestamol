@@ -8,7 +8,8 @@ function baseName(str)
 }
 
 
-function loadFile(url, mdl) {
+function loadFile(url, mdl)
+{
 	var path=(displayBridge.loadSamples(url))
 	mdl.append(
 		{
@@ -19,4 +20,9 @@ function loadFile(url, mdl) {
 			'color': "#ff0000"
 		})
 	displayBridge.loadSamplesCallback(baseName(path))
+}
+
+var prettyTypes = {
+	'lower': qsTr("Lower"),
+	'diagonal': qsTr("Diagonal")
 }
