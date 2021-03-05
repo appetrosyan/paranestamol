@@ -40,7 +40,7 @@ plotting stack, and all changes of the GUI sliders."""
     lowerTypeChanged = QtCore.Signal()
     diagonalTypeChanged = QtCore.Signal()
 
-    def __init__(self, paramsModel, parent=None):
+    def __init__(self, paramsModel=None, parent=None):
         super().__init__(parent)
         self.logL = -1
         self.paramsModel = paramsModel
