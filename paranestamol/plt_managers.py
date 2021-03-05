@@ -1,13 +1,6 @@
-<<<<<<< HEAD
 """The plotting and updating logic is hanlded in this file"""
 from matplotlib.figure import Figure
-=======
-from matplotlib_backend_qtquick.qt_compat import QtCore
-import matplotlib.pyplot as plt
-from multiprocessing import Pool
->>>>>>> origin/async-plotting
 from anesthetic import make_2d_axes
-# import pathos.pools as pp
 import numpy as np
 
 from paranestamol import Legend, QtCore
@@ -21,6 +14,7 @@ def updateTrianglePlot(figure, params, tex, samples, legends, logL, kinds=None):
             'diagonal': 'hist',
         }
     for x in samples:
+        # FIXME: Strip off the weights
         samples[x]\
             .live_points(logL)\
             .plot_2d(axes,
@@ -41,10 +35,10 @@ class TrianglePlotter(QtCore.QObject):
 plotting stack, and all changes of the GUI sliders."""
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
-    reqNewTriangle = QtCore.Signal(object, object, object, object, object, float, object)
+    reqNewTriangle = QtCore.Signal(object, object, object, object,
+                                   object, float, object)
     lowerTypeChanged = QtCore.Signal()
     diagonalTypeChanged = QtCore.Signal()
-
 
     def __init__(self, paramsModel, parent=None):
         super().__init__(parent)
@@ -52,7 +46,6 @@ plotting stack, and all changes of the GUI sliders."""
         self.paramsModel = paramsModel
         self.legends = dict()
         self.samples = dict()
-<<<<<<< HEAD
         self._LCache = dict()
         self._higson = HigsonPlotter()
         self._stack = ThreadedStackBuffer()
@@ -69,11 +62,8 @@ plotting stack, and all changes of the GUI sliders."""
             'diagonal': 'hist',
         }
 
-
-
     def get_lowerType(self):
         return self.plotTypes['lower']
-
 
     def set_lowerType(self, other):
         if other in {"kde", "scatter", "fastkde"}:
@@ -81,7 +71,6 @@ plotting stack, and all changes of the GUI sliders."""
             self.reDraw()
         else:
             raise ValueError(f'{other} lower plot type is not recognised. ')
-
 
     lowerType = QtCore.Property(str,
                                 fget=get_lowerType,
@@ -91,7 +80,6 @@ plotting stack, and all changes of the GUI sliders."""
     def get_diagonalType(self):
         return self.plotTypes['diagonal']
 
-
     def set_diagonalType(self, other):
         if other in {'kde', 'hist'}:
             self.plotTypes['diagonal'] = other
@@ -99,6 +87,15 @@ plotting stack, and all changes of the GUI sliders."""
         else:
             raise ValueError(f'{other} diagonal plot type is not recognised. ')
 
+    def get_diagonalType(self):
+        return self.plotTypes['diagonal']
+
+    def set_diagonalType(self, other):
+        if other in {'kde', 'hist'}:
+            self.plotTypes['diagonal'] = other
+            self.reDraw()
+        else:
+            raise ValueError(f'{other} diagonal plot type is not recognised. ')
 
     diagonalType = QtCore.Property(str,
                                    fget=get_diagonalType,
@@ -119,15 +116,10 @@ plotting stack, and all changes of the GUI sliders."""
     def higCanvas(self):
         return self._higson.higCanvas()
 
-
     @higCanvas.setter
     def higCanvas(self, other):
         self._higson.higCanvas = other
-
-=======
         self.paramsModel = None
-        self.worker = ScreenPainter(self)
->>>>>>> origin/async-plotting
 
     @property
     def params(self):
@@ -137,7 +129,6 @@ plotting stack, and all changes of the GUI sliders."""
     @property
     def tex(self):
         return self.paramsModel.tex
-
 
     @QtCore.Slot(float, object)
     def cacheTriangleFigure(self, logL, fig):
@@ -152,7 +143,6 @@ plotting stack, and all changes of the GUI sliders."""
                 pass
             self._invalidating = False
 
-
     @QtCore.Slot(object)
     def _updateTriangleFigure(self, fig):
         self.triCanvas.figure = fig
@@ -160,12 +150,13 @@ plotting stack, and all changes of the GUI sliders."""
         self.triCanvas.draw_idle()
 
 
-    def request_update_triangle(self, post=None, logL: float =-1):
+    def request_update_triangle(self, post=None, logL: float = -1):
         fig = self.triCanvas.figure
         figsize = fig.get_figwidth(), fig.get_figheight()
         self.reqNewTriangle.emit(Figure(figsize=figsize),
                                  self.params, self.tex,
-                                 self.samples, self.legends, logL, self.plotTypes)
+                                 self.samples, self.legends, logL,
+                                 self.plotTypes)
 
     @QtCore.Slot()
     @QtCore.Slot(object, object)
@@ -179,11 +170,9 @@ plotting stack, and all changes of the GUI sliders."""
             self.request_update_triangle(logL=x)
         self._stack.pop()
 
-
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
         self.logL = logL
-<<<<<<< HEAD
         if self.logL in self._LCache:
             wh = self.triCanvas.figure.get_size_inches()
             self.triCanvas.figure = self._LCache[self.logL]
@@ -193,40 +182,11 @@ plotting stack, and all changes of the GUI sliders."""
         else:
             self.request_update_triangle(logL= self.logL)
 
-=======
-        self._update()
->>>>>>> origin/async-plotting
 
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
         self.beta = beta
-<<<<<<< HEAD
         self._higson._update_higson(self.samples, self.legends)
-
-=======
-        self._update()
-
-    def _update(self):
-        self.notify.emit('repainting')
-        w, h = self.canvas.figure.get_figwidth(), self.canvas.figure.get_figheight()
-        self.worker.figure = plt.figure(figsize=(w, h))
-        self.worker.params = self.params
-        self.worker.tex = self.tex
-        self.worker.samples = self.samples
-        self.worker.legends = self.legends
-        self.worker.logL = self.logL
-        self.worker.beta = self.beta
-
-        self.worker.done.connect(self.paintFigure)
-        self.worker.start()
-
-    @QtCore.Slot(object)
-    def paintFigure(self, fig):
-        self.canvas.figure = fig
-        fig.set_canvas(self.canvas)
-        self.canvas.draw_idle()
-        self.notify.emit('View Updated.')
->>>>>>> origin/async-plotting
 
     @QtCore.Slot()
     @QtCore.Slot(object)
@@ -238,7 +198,6 @@ plotting stack, and all changes of the GUI sliders."""
             if legends is None and self.legends is None:
                 for k in self.samples:
                     self.legends[k] = Legend(title=k)
-<<<<<<< HEAD
             elif legends is not None:
                 self.legends = legends
         self.invalidateCache()
@@ -252,21 +211,17 @@ class HigsonPlotter(QtCore.QObject):
         self._beta = 1
         self._cache = {}
 
-
     @property
     def beta(self):
         return self._beta
-
 
     @beta.setter
     def beta(self, other):
         self._beta = other
 
-
     @property
     def higCanvas(self):
         return self._higCanvas
-
 
     @higCanvas.setter
     def higCanvas(self, other):
@@ -278,7 +233,6 @@ class HigsonPlotter(QtCore.QObject):
         self.ax.set_xlabel(r'$\log X$')
         self.ax.set_ylabel(r'$LX$', labelpad=-30)
         self.higCanvas.figure.set_tight_layout({'pad': 0})
-
 
     def _update_higson(self, samples, legends):
         self.ax.lines.clear()
@@ -292,7 +246,7 @@ class HigsonPlotter(QtCore.QObject):
                 LX = np.exp(LXi-LXi.max())
                 try:
                     self._cache[self.beta][x] = (logX, LX)
-                except KeyError as e:
+                except KeyError:
                     self._cache[self.beta] = {}
                     self._cache[self.beta][x] = (logX, LX)
             self.ax.plot(logX[::-1], LX, color=legends[x].color)
@@ -301,7 +255,6 @@ class HigsonPlotter(QtCore.QObject):
 
 class ThreadedPlotter(QtCore.QObject):
     finished = QtCore.Signal(float, object)
-
 
     @QtCore.Slot(object, object, object, object, object, float)
     @QtCore.Slot(object, object, object, object, object, float, object)
@@ -315,16 +268,13 @@ class ThreadedPlotter(QtCore.QObject):
 class ThreadedStackBuffer(QtCore.QObject):
     popped = QtCore.Signal(object, object, object, object, object, float, object)
 
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._buffer = []
         self.autopop = True
 
-
     def clear_buffer(self):
         self._buffer = []
-
 
     def pop(self):
         try:
@@ -333,55 +283,8 @@ class ThreadedStackBuffer(QtCore.QObject):
         except:
             self.autopop = True
 
-
     @QtCore.Slot(object, object, object, object, object, float, object)
     def push(self, *args):
         self._buffer.append(args)
         if self.autopop:
             self.pop()
-=======
-        else:
-            self.legends = legends
-        self._update()
-
-
-def updateTrianglePlot(figure, params, tex, samples, legends,
-                       logL=None, beta=None):
-    figure, axes = make_2d_axes(params, tex=tex, fig=figure)
-    for x in samples:
-        samples[x].plot_2d(axes,
-                           alpha=legends[x].alpha,
-                           color=legends[x].color,
-                           label=legends[x].title)
-
-    handles, labels = axes[params[0]][params[1]]\
-        .get_legend_handles_labels()
-    figure.legend(handles, labels)
-    return figure
-
-
-class ScreenPainter(QtCore.QThread):
-    done = QtCore.Signal(object)
-
-    def __init__(self, parent, figure=None, params=None, tex=None, samples=None,
-                 legends=None, logL=None, beta=None):
-        QtCore.QThread.__init__(self, parent)
-        self.figure = figure
-        self.params = params
-        self.tex = tex
-        self.samples = samples
-        self.legends = legends
-        self.logL = logL
-        self.beta = beta
-
-    def run(self):
-        args = (self.figure, self.params, self.tex,
-                self.samples, self.legends, self.logL,
-                self.beta)
-        # with Pool(1) as p:
-            # fig = p.starmap(updateTrianglePlot, [args])
-        # fig = fig[0]
-        fig = updateTrianglePlot(*args)
-        self.done.emit(fig)
-        self.quit()
->>>>>>> origin/async-plotting
