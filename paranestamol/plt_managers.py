@@ -119,7 +119,6 @@ plotting stack, and all changes of the GUI sliders."""
     @higCanvas.setter
     def higCanvas(self, other):
         self._higson.higCanvas = other
-        self.paramsModel = None
 
     @property
     def params(self):
@@ -180,7 +179,7 @@ plotting stack, and all changes of the GUI sliders."""
             self.triCanvas.figure.set_size_inches(wh)
             self.triCanvas.draw_idle()
         else:
-            self.request_update_triangle(logL= self.logL)
+            self.request_update_triangle(logL=self.logL)
 
 
     @QtCore.Slot(float)
