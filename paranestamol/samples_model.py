@@ -2,14 +2,12 @@
 keep the QML model in sync with the Python back end.
 
 """
-from matplotlib_backend_qtquick.qt_compat import QtCore
 from anesthetic.samples import NestedSamples, MCMCSamples
 from os.path import basename
 import matplotlib.pyplot as plt
 from math import ceil
 
-from .utils import cleanupFileRoot, Legend
-
+from paranestamol import QtCore, cleanupFileRoot
 
 class ParameterModel(QtCore.QAbstractListModel):
     nameRole = QtCore.Qt.UserRole + 1000 + 0
@@ -281,6 +279,3 @@ class SamplesModel(QtCore.QAbstractListModel):
         self.legends = {}
         self.displayed_names = set()
         self.parameters = {}
-
-
-
