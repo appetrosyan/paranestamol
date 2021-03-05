@@ -69,6 +69,7 @@ Item{
 		width: parent.width
 		height: parent.height-fileRow.height
 		border.width: 1
+		color: palette.base
 		ListView{
 			id: fileView
 			anchors.fill: parent

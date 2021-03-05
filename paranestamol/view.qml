@@ -20,6 +20,10 @@ ApplicationWindow {
 	function displayPythonMessage(msg){
 		statusBar.text = msg
 	}
+	SystemPalette{
+		id: activePalette
+		colorGroup: SystemPalette.Active
+	}
 	FileDialog{
 		id: fileBrowse
 		title: qsTr("Please choose the samples root file")
@@ -199,6 +203,7 @@ ApplicationWindow {
 									}
 								}
 								Text {
+									color: activePalette.text
 									anchors.left: selectedBox.right
 									anchors.right: parent.right
 									anchors.verticalCenter: parent.verticalCenter
@@ -221,6 +226,7 @@ ApplicationWindow {
 	footer: Text{
 		id: statusBar
 		text: "Status"
+		color: "red"
 		anchors.left: parent.left
 		anchors.leftMargin: 8
 	}
