@@ -39,7 +39,7 @@ class Legend:
             return self._color
 
         @color.setter
-        def color_(self, color):
+        def color(self, color):
             if isinstance(color, str):
                 if len(color) == 8: # ARGB
                     self._color = f'#{color[3:]}'

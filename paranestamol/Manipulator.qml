@@ -14,6 +14,14 @@ Item{
 	property alias value: currentValue.value
 	property var trans: a => a
 	property var invtrans: a=>a
+	SystemPalette{
+		id: palette
+		colorGroup: SystemPalette.Active
+	}
+	SystemPalette{
+		id: disabledPalette
+		colorGroup: SystemPalette.Disabled
+	}
 	Text{
 		id: marker
 		width: 30
@@ -29,6 +37,7 @@ Item{
 				anchors.horizontalCenter = parent.horizontalCenter
 			}	
 		}
+		color: palette.text
 	}
 	Slider{
 		id: slider
@@ -58,6 +67,7 @@ Item{
 		text: "%1".arg(Math.round(trans(slider.value)))
 		font.bold: focus
 		property var value: trans(slider.value)
+		color: palette.text
 		onTextChanged: {
 			valueChangeStarted(parseInt(text))
 		}

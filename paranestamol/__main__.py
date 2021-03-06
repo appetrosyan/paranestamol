@@ -53,6 +53,7 @@ def main():
     context = engine.rootContext()
     paramsModel = ParameterModel()
     samplesModel = SamplesModel()
+    print(samplesModel)
     displayBridge = TrianglePlotter(paramsModel)
 
     context.setContextProperty("displayBridge", displayBridge)
@@ -77,6 +78,7 @@ def main():
     paramsModel.dataChanged.connect(displayBridge.invalidateCache)
 
     temperatureSlider = win.findChild(QtCore.QObject, "temperature_slider")
+    print(temperatureSlider)
     temperatureSlider.valueChangeStarted\
                      .connect(displayBridge.changeTemperature)
     loglSlider = win.findChild(QtCore.QObject, "logl_slider")

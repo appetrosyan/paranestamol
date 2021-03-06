@@ -24,6 +24,9 @@ ApplicationWindow {
 		id: activePalette
 		colorGroup: SystemPalette.Active
 	}
+	Component.onCompleted: {
+		console.log(samplesModel)
+	}
 	FileDialog{
 		id: fileBrowse
 		title: qsTr("Please choose the samples root file")
@@ -225,8 +228,8 @@ ApplicationWindow {
 	}
 	footer: Text{
 		id: statusBar
-		text: "Status"
-		color: "red"
+		text: "Status Bar"
+		color: activePalette.windowText
 		anchors.left: parent.left
 		anchors.leftMargin: 8
 	}

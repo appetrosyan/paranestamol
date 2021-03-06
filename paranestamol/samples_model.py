@@ -7,7 +7,7 @@ from os.path import basename
 import matplotlib.pyplot as plt
 from math import ceil
 
-from paranestamol import QtCore, cleanupFileRoot
+from paranestamol import QtCore, cleanupFileRoot, Legend
 
 class ParameterModel(QtCore.QAbstractListModel):
     nameRole = QtCore.Qt.UserRole + 1000 + 0
