@@ -4,7 +4,6 @@ function baseName(str)
 	if(base.lastIndexOf(".") != -1)
 		base = base.substring(0, base.lastIndexOf("."));
 	return base;
-
 }
 
 
