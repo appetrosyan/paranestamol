@@ -10,6 +10,7 @@ Item{
 	height: childrenRect.height
 	signal newTypeChosen(var value)
 	Text{
+		color: activePalette.text
 		anchors.left: parent.left
 		anchors.leftMargin: 8
 		id: description
