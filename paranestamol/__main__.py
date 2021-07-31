@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-r"""This is the main file for invoking the paranestamol application.
-
-"""
+r"""This is the main file for invoking the paranestamol application."""
 import sys
 import signal
 import os
@@ -12,28 +10,25 @@ from paranestamol.samples_model import SamplesModel, ParameterModel
 from paranestamol.plt_managers import TrianglePlotter
 from paranestamol import FigureCanvasQML, QtWidgets, QtCore, QtQml
 
-
 PROJECT_PATH = os.path.dirname(os.path.realpath(__name__))
 
 
 def parse_args():
-    """What is on the tin."""
+    """Self-explanatory."""
     parser = argparse.ArgumentParser(
         prog='paranestamol',
         description="Paranestamol, graphical nested sampling visualisation.",
-        usage='python3 -m %(prog)s [options]'
-    )
-    parser.add_argument(
-        'file_roots',
-        metavar='file root(s)',
-        type=str, nargs='*',
-        help='Add the following file to the file root'
-    )
+        usage='python3 -m %(prog)s [options]')
+    parser.add_argument('file_roots',
+                        metavar='file root(s)',
+                        type=str,
+                        nargs='*',
+                        help='file_root to process')
     return parser.parse_args()
 
 
 def app_setup(name):
-    """Housekeeping boilerplate"""
+    """Housekeeping boilerplate."""
     app = QtWidgets.QApplication(sys.argv)
     app.setOrganizationName(f"{name}")
     app.setOrganizationDomain(f"{name}.org")
