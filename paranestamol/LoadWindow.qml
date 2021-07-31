@@ -98,29 +98,31 @@ Item{
 						}
 						anchors.verticalCenter: fileLine.verticalCenter
 					}
-					Rectangle{
+					Button {
 						id: legendColor
-						color: model.legend_color
-						opacity: model.legend_alpha
 						anchors.left: display.right
 						anchors.top: parent.top
-						anchors.topMargin: 14
+						// anchors.topMargin: 14
 						anchors.verticalCenter: fileLine.verticalCenter
-						width: 10
-						MouseArea {
-							anchors.fill: parent
-							signal updaColor()
-							onUpdaColor:{
-								model.legend_color = colorBrowse.color
-							}
-							onClicked: {
-								fileView.currentIndex = index
-								colorBrowse.visible = true
-								colorBrowse.color = model.legend_color
-								colorBrowse.color.a = model.legend_alpha
-								colorBrowse.accepted.connect(this.updaColor)
-							}
-							
+						signal updaColor()
+						height: fileLine.height
+						width: height
+						onClicked: {
+							fileView.currentIndex = index
+							colorBrowse.visible = true
+							colorBrowse.color = model.legend_color
+							colorBrowse.color.a = model.legend_alpha
+							colorBrowse.accepted.connect(this.updaColor)
+						}
+						onUpdaColor:{
+							model.legend_color = colorBrowse.color
+						}
+						Rectangle{
+							color: model.legend_color
+							opacity: model.legend_alpha
+							anchors.centerIn: parent
+							width: fileLine.height - 8
+							height: width
 						}
 					}
 					TextInput{

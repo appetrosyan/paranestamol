@@ -136,7 +136,9 @@ ApplicationWindow {
 				anchors.right: temperature.left
 				objectName: 'higsonPlot'
 			}
+
 			Button{
+				id: dotdotdotButton
 				anchors.topMargin: 8
 				anchors.leftMargin: 14
 				anchors.top: triangleView.top
@@ -151,79 +153,16 @@ ApplicationWindow {
 					id: paramsPopup
 					width: 250
 					height: 300
-					TextField{
-						id: filter
-						width: parent.width
-						placeholderText: qsTr('Filter')
-						onTextChanged: paramsModel.setFilterFixedString(text)
-					}
-					ListView{
-						id: paramView
+					ParamsPopup {
 						model: paramsModel
-						anchors.top: filter.bottom
-						anchors.right: parent.right
-						anchors.bottom: parent.bottom
-						anchors.left: parent.left
-						header:	Item{
-							anchors.left: parent.left
-							anchors.right: parent.right
-							height: childrenRect.height
-							Column{
-								height: childrenRect.height
-								anchors.left: parent.left
-								anchors.right: parent.right
-								PlotSelector{
-									type: "lower"
-									anchors.left: parent.left
-									anchors.right: parent.right
-									onNewTypeChosen: {
-										displayBridge.lowerType = value
-									}
-									currentIndex: 2 // Scatter
-								}
-								PlotSelector{
-									type: "diagonal"
-									anchors.left: parent.left
-									anchors.right: parent.right
-									onNewTypeChosen: {
-										displayBridge.diagonalType = value
-									}
-									currentIndex: 0 // Hist
-								}
-							}
+						anchors.fill: parent
+						onSaveRequested: {
+							displayBridge.saveFigure(fileName)
 						}
-						delegate: Component{
-							Item{
-								height: selectedBox.height
-								width: paramView.width
-								CheckBox{
-									id: selectedBox
-									checked: model.selected
-									anchors.left: parent.left
-									anchors.verticalCenter: parent.verticalCenter
-									onClicked: {
-										model.selected = !model.selected
-									}
-								}
-								Text {
-									color: activePalette.text
-									anchors.left: selectedBox.right
-									anchors.right: parent.right
-									anchors.verticalCenter: parent.verticalCenter
-									text: model.name
-								}
-							}
-						}
-						ScrollIndicator.vertical: ScrollIndicator{
-							parent: paramView.parent
-							anchors.top: paramView.top
-							anchors.bottom: paramView.bottom
-							anchors.right: paramView.right
-						}
-						clip: true
 					}
 				}
 			}
+		
 		}
 	}
 	footer: Text{
