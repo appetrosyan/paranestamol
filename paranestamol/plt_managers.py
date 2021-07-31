@@ -2,11 +2,17 @@
 from matplotlib.figure import Figure
 from anesthetic import make_2d_axes
 import numpy as np
-
+from PySide2.QtCore import QUrl
 from paranestamol import Legend, QtCore
 
 
-def updateTrianglePlot(figure, params, tex, samples, legends, logL, kinds=None):
+def updateTrianglePlot(figure,
+                       params,
+                       tex,
+                       samples,
+                       legends,
+                       logL,
+                       kinds=None):
     figure, axes = make_2d_axes(params, tex=tex, fig=figure, upper=False)
     if kinds is None:
         kinds = {
@@ -35,12 +41,13 @@ class TrianglePlotter(QtCore.QObject):
 plotting stack, and all changes of the GUI sliders."""
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
-    reqNewTriangle = QtCore.Signal(object, object, object, object,
-                                   object, float, object)
+    reqNewTriangle = QtCore.Signal(object, object, object, object, object,
+                                   float, object)
     lowerTypeChanged = QtCore.Signal()
     diagonalTypeChanged = QtCore.Signal()
 
     def __init__(self, paramsModel=None, parent=None):
+        """Construct TrianglePlotter instance."""
         super().__init__(parent)
         self.logL = -1
         self.paramsModel = paramsModel
@@ -63,9 +70,11 @@ plotting stack, and all changes of the GUI sliders."""
         }
 
     def get_lowerType(self):
+        """Get lower plot type."""
         return self.plotTypes['lower']
 
     def set_lowerType(self, other):
+        """Set lower plot type."""
         if other in {"kde", "scatter", "fastkde"}:
             self.plotTypes['lower'] = other
             self.reDraw()
@@ -78,19 +87,11 @@ plotting stack, and all changes of the GUI sliders."""
                                 notify=lowerTypeChanged)
 
     def get_diagonalType(self):
+        """Get diagonal plot type."""
         return self.plotTypes['diagonal']
 
     def set_diagonalType(self, other):
-        if other in {'kde', 'hist'}:
-            self.plotTypes['diagonal'] = other
-            self.reDraw()
-        else:
-            raise ValueError(f'{other} diagonal plot type is not recognised. ')
-
-    def get_diagonalType(self):
-        return self.plotTypes['diagonal']
-
-    def set_diagonalType(self, other):
+        """Set diagonal plot type."""
         if other in {'kde', 'hist'}:
             self.plotTypes['diagonal'] = other
             self.reDraw()
@@ -104,33 +105,37 @@ plotting stack, and all changes of the GUI sliders."""
 
     @property
     def beta(self):
+        """Nested sampling temperature."""
         return self._higson.beta
-
 
     @beta.setter
     def beta(self, other: float):
+        """Setter for nested sampling temperature."""
         self._higson.beta = other
-
 
     @property
     def higCanvas(self):
+        """Get the canvas to plot a Higson plot to."""
         return self._higson.higCanvas()
 
     @higCanvas.setter
     def higCanvas(self, other):
+        """Set the canvas to plot the Higson plot to."""
         self._higson.higCanvas = other
 
     @property
     def params(self):
+        """Get all of the parameters available."""
         return list(self.paramsModel.displayNames)
-
 
     @property
     def tex(self):
+        """Get the parameters' LaTeX representation."""
         return self.paramsModel.tex
 
     @QtCore.Slot(float, object)
     def cacheTriangleFigure(self, logL, fig):
+        """Cache a triangle figure."""
         self._stack.pop()
         if not self._invalidating:
             self._LCache[logL] = fig
@@ -141,6 +146,7 @@ plotting stack, and all changes of the GUI sliders."""
             while self._worker.busy:
                 pass
             self._invalidating = False
+            self.notify.emit('Cache cleared!')
 
     @QtCore.Slot(object)
     def _updateTriangleFigure(self, fig):
@@ -148,18 +154,26 @@ plotting stack, and all changes of the GUI sliders."""
         fig.set_canvas(self.triCanvas)
         self.triCanvas.draw_idle()
 
-
     def request_update_triangle(self, post=None, logL: float = -1):
+        """Enqueue update of the triangle figure into a threaded plotter."""
         fig = self.triCanvas.figure
         figsize = fig.get_figwidth(), fig.get_figheight()
-        self.reqNewTriangle.emit(Figure(figsize=figsize),
-                                 self.params, self.tex,
-                                 self.samples, self.legends, logL,
+        self.reqNewTriangle.emit(Figure(figsize=figsize), self.params,
+                                 self.tex, self.samples, self.legends, logL,
                                  self.plotTypes)
+
+    @QtCore.Slot(str)
+    def saveFigure(self, filename: str):
+        """Save the current Triangle Plot to a file."""
+        url = QUrl(filename)
+        if filename.endswith(".gif"):
+            self.notify.emit("requested a GIF. Not yet supported")
+        self.triCanvas.figure.savefig(fname=url.toLocalFile())
 
     @QtCore.Slot()
     @QtCore.Slot(object, object)
     def invalidateCache(self, *args):
+        """Invalidate the cache and start plotting all over."""
         self.notify.emit("re-building cache. Please wait.")
         self._invalidating = True
         self._stack.clear_buffer()
@@ -171,6 +185,7 @@ plotting stack, and all changes of the GUI sliders."""
 
     @QtCore.Slot(float)
     def changeLogL(self, logL, *args):
+        """Request change of logL and re-plot."""
         self.logL = logL
         if self.logL in self._LCache:
             wh = self.triCanvas.figure.get_size_inches()
@@ -181,9 +196,9 @@ plotting stack, and all changes of the GUI sliders."""
         else:
             self.request_update_triangle(logL=self.logL)
 
-
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
+        """Change the nested samples' temperature and request an update to the affected plot."""
         self.beta = beta
         self._higson._update_higson(self.samples, self.legends)
 
@@ -191,7 +206,9 @@ plotting stack, and all changes of the GUI sliders."""
     @QtCore.Slot(object)
     @QtCore.Slot(object, object)
     def reDraw(self, samples=None, legends=None, *args):
-        if not isinstance(samples, QtCore.QModelIndex) and not isinstance(legends, QtCore.QModelIndex):
+        """Request a complete redraw."""
+        if not isinstance(samples, QtCore.QModelIndex) and not isinstance(
+                legends, QtCore.QModelIndex):
             if samples is not None:
                 self.samples = samples
             if legends is None and self.legends is None:
@@ -205,13 +222,16 @@ plotting stack, and all changes of the GUI sliders."""
 
 
 class HigsonPlotter(QtCore.QObject):
-    def __init__(self,  parent=None):
+    """A class that handles the plotting and deployment of a higson plot."""
+    def __init__(self, parent=None):
+        """Construct a higson Plotter."""
         super().__init__(parent)
         self._beta = 1
         self._cache = {}
 
     @property
     def beta(self):
+        """Nested Samples' temperature."""
         return self._beta
 
     @beta.setter
@@ -220,6 +240,7 @@ class HigsonPlotter(QtCore.QObject):
 
     @property
     def higCanvas(self):
+        """Higson canvas to plot to."""
         return self._higCanvas
 
     @higCanvas.setter
@@ -240,9 +261,10 @@ class HigsonPlotter(QtCore.QObject):
                 logX, LX = self._cache[self.beta][x]
             else:
                 with np.errstate(divide='ignore'):
-                    logX = np.log(samples[x].nlive / (samples[x].nlive+1)).cumsum()
-                LXi = samples[x].logL/self.beta + logX
-                LX = np.exp(LXi-LXi.max())
+                    logX = np.log(samples[x].nlive /
+                                  (samples[x].nlive + 1)).cumsum()
+                LXi = samples[x].logL / self.beta + logX
+                LX = np.exp(LXi - LXi.max())
                 try:
                     self._cache[self.beta][x] = (logX, LX)
                 except KeyError:
@@ -253,11 +275,13 @@ class HigsonPlotter(QtCore.QObject):
 
 
 class ThreadedPlotter(QtCore.QObject):
+    """A Qt Threading based signal operated plotter."""
     finished = QtCore.Signal(float, object)
 
     @QtCore.Slot(object, object, object, object, object, float)
     @QtCore.Slot(object, object, object, object, object, float, object)
     def plot_triangle(self, *args):
+        """Start plotting a triangle plot"""
         self.busy = True
         fig = updateTrianglePlot(*args)
         self.finished.emit(args[-2], fig)
@@ -265,25 +289,32 @@ class ThreadedPlotter(QtCore.QObject):
 
 
 class ThreadedStackBuffer(QtCore.QObject):
-    popped = QtCore.Signal(object, object, object, object, object, float, object)
+    """A threaded stack buffer used to handle the plotting stack."""
+
+    popped = QtCore.Signal(object, object, object, object, object, float,
+                           object)
 
     def __init__(self, parent=None):
+        """Create a ThreadedStackBuffer instance."""
         super().__init__(parent)
         self._buffer = []
         self.autopop = True
 
     def clear_buffer(self):
+        """Clear the plotting buffer."""
         self._buffer = []
 
     def pop(self):
+        """Pop the stack buffer."""
         try:
             self.autopop = False
             self.popped.emit(*self._buffer.pop())
-        except:
+        except:  # TODO: figure out what kind of exception is thrown.
             self.autopop = True
 
     @QtCore.Slot(object, object, object, object, object, float, object)
     def push(self, *args):
+        """Push an object to the stack buffer."""
         self._buffer.append(args)
         if self.autopop:
             self.pop()
