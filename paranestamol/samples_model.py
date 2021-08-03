@@ -9,7 +9,10 @@ from math import ceil
 
 from paranestamol import QtCore, cleanupFileRoot, Legend
 
+
 class ParameterModel(QtCore.QAbstractListModel):
+    """A model representing parameters in a nested sampling run."""
+
     nameRole = QtCore.Qt.UserRole + 1000 + 0
     texRole = QtCore.Qt.UserRole + 1000 + 1
     selectedRole = QtCore.Qt.UserRole + 1000 + 2
@@ -22,6 +25,7 @@ class ParameterModel(QtCore.QAbstractListModel):
     isEmpty = QtCore.Property(bool, _isEmpty, notify=isEmptyChanged)
 
     def __init__(self, parent=None, columns=[], tex={}):
+        """Construct."""
         super(ParameterModel, self).__init__(parent)
         self.names = columns
         self.tex = tex
@@ -112,6 +116,15 @@ class SamplesModel(QtCore.QAbstractListModel):
     minLogLChanged = QtCore.Signal()
     maxLogLChanged = QtCore.Signal()
 
+    def __init__(self, parent=None, names=[], samples={}):
+        """Construct."""
+        super().__init__(parent)
+        self.names = names
+        self.samples = samples
+        self.legends = {}
+        self.displayed_names = set()
+        self.parameters = {}
+
     def _minLogL(self):
         try:
             return min(self.samples[x].logL.min() for x in self.samples) - 1
@@ -119,7 +132,7 @@ class SamplesModel(QtCore.QAbstractListModel):
             return 0
 
     def _maxLogL(self):
-        try: 
+        try:
             return max(self.samples[x].logL.max() for x in self.samples)
         except ValueError:
             return 0
@@ -130,10 +143,9 @@ class SamplesModel(QtCore.QAbstractListModel):
         return not self.hasChildren()
 
     isEmpty = QtCore.Property(bool, _isEmpty, notify=isEmptyChanged)
-    
+
     minLogL = QtCore.Property(float, _minLogL, notify=minLogLChanged)
     maxLogL = QtCore.Property(float, _maxLogL, notify=maxLogLChanged)
-    
 
     # Roles, i.e. properties for each model element
     nameRole = QtCore.Qt.UserRole + 1000 + 0
@@ -232,8 +244,6 @@ class SamplesModel(QtCore.QAbstractListModel):
                QtCore.Qt.ItemIsSelectable
 
     def requestRepaint(self):
-        # TODO this should be broken down into specific kinds of adjustments
-        # and individual signals that need to be handled. 
         samples = {k: self.samples[k] for k in self.displayed_names}
         legends = {k: self.legends[k] for k in self.displayed_names}
         self.fullRepaint.emit(samples, legends)
@@ -270,12 +280,4 @@ class SamplesModel(QtCore.QAbstractListModel):
         else:
             return False
 
-    
 
-    def __init__(self, parent=None, names=[], samples={}):
-        super().__init__(parent)
-        self.names = names
-        self.samples = samples
-        self.legends = {}
-        self.displayed_names = set()
-        self.parameters = {}
