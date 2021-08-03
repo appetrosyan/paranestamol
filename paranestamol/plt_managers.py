@@ -1,5 +1,6 @@
 """The plotting and updating logic is hanlded in this file"""
 from matplotlib.figure import Figure
+from matplotlib.animation import FuncAnimation
 from anesthetic import make_2d_axes
 import numpy as np
 from PySide2.QtCore import QUrl
@@ -37,8 +38,8 @@ def updateTrianglePlot(figure,
 
 
 class TrianglePlotter(QtCore.QObject):
-    """The class that handles the creation of the Plotting thread, the
-plotting stack, and all changes of the GUI sliders."""
+    """Class responsible for threaded plotting."""
+
     notify = QtCore.Signal(str)
     paramsChanged = QtCore.Signal()
     reqNewTriangle = QtCore.Signal(object, object, object, object, object,
@@ -162,13 +163,35 @@ plotting stack, and all changes of the GUI sliders."""
                                  self.tex, self.samples, self.legends, logL,
                                  self.plotTypes)
 
+    def _animationUpdater(self, fig):
+        def update(logL):
+            updateTrianglePlot(fig,
+                               self.params,
+                               self.tex,
+                               self.samples,
+                               self.legends,
+                               logL)
+            return fig
+
+        return update
+
     @QtCore.Slot(str)
     def saveFigure(self, filename: str):
         """Save the current Triangle Plot to a file."""
         url = QUrl(filename)
         if filename.endswith(".gif"):
-            self.notify.emit("requested a GIF. Not yet supported")
-        self.triCanvas.figure.savefig(fname=url.toLocalFile())
+            self.notify.emit("Saving a GIF, this may take a while.")
+            mL = min(self.samples[x].logL.min() for x in self.samples) - 1
+            ML = max(self.samples[x].logL.max() for x in self.samples)
+            fig = Figure()
+            ani = FuncAnimation(fig,
+                                self._animationUpdater(fig),
+                                frames=np.linspace(mL, ML, 60))
+            ani.save(filename)
+            self.notify.emit("Done!" +
+                             f"Animation saved to <i>{filename}</i>.")
+        else: 
+            self.triCanvas.figure.savefig(fname=url.toLocalFile())
 
     @QtCore.Slot()
     @QtCore.Slot(object, object)
@@ -223,6 +246,7 @@ plotting stack, and all changes of the GUI sliders."""
 
 class HigsonPlotter(QtCore.QObject):
     """A class that handles the plotting and deployment of a higson plot."""
+
     def __init__(self, parent=None):
         """Construct a higson Plotter."""
         super().__init__(parent)
@@ -276,12 +300,13 @@ class HigsonPlotter(QtCore.QObject):
 
 class ThreadedPlotter(QtCore.QObject):
     """A Qt Threading based signal operated plotter."""
+
     finished = QtCore.Signal(float, object)
 
     @QtCore.Slot(object, object, object, object, object, float)
     @QtCore.Slot(object, object, object, object, object, float, object)
     def plot_triangle(self, *args):
-        """Start plotting a triangle plot"""
+        """Start plotting a triangle plot."""
         self.busy = True
         fig = updateTrianglePlot(*args)
         self.finished.emit(args[-2], fig)

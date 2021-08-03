@@ -17,7 +17,12 @@ Item {
 			paramsPopup.saveRequested(fileUrl)
 		}
 		defaultSuffix: "png"
-		nameFilters: ["Lossless Bitmap PNG (*.png)", "Lossless PDF (*.pdf)", "Lossy Bitmap JPEG (*.jpg)"]
+		nameFilters: [
+			"Lossless compressed Bitmap PNG (*.png)",
+			"Lossless PDF (*.pdf)",
+			"Lossy Bitmap JPEG (*.jpg)",
+			"Animated GIF (*.gif)",
+		]
 	}
 	TextField{
 		id: filter
