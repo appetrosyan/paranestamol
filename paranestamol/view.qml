@@ -12,7 +12,7 @@ import "utils.js" as Utils
 ApplicationWindow {
 	id: mainWindow
 	visible: true
-	title: mainView.currentItem.title
+	title: mainView.currentItem.title + " — Paranestamol"
 	width: 800
 	minimumWidth: 400
 	height: 600
