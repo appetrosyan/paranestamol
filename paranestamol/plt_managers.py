@@ -54,8 +54,8 @@ class TrianglePlotter(QtCore.QObject):
         self.legends = dict()
         self.samples = dict()
         self._LCache = dict()
-        self._higson = HigsonPlotter()
-        self._stack = ThreadedStackBuffer()
+        self.higson = HigsonPlotter(parent=self)
+        self._stack = ThreadedStackBuffer(parent=self)
         self._thread = QtCore.QThread(parent=self)
         self._thread.start()
         self._worker = ThreadedPlotter()
@@ -63,6 +63,7 @@ class TrianglePlotter(QtCore.QObject):
         self.reqNewTriangle.connect(self._stack.push)
         self._stack.popped.connect(self._worker.plot_triangle)
         self._worker.finished.connect(self.cacheTriangleFigure)
+        self._worker.forward_exceptions.connect(self.catch)
         self._invalidating = False
         self.plotTypes = {
             'lower': 'scatter',
@@ -102,26 +103,6 @@ class TrianglePlotter(QtCore.QObject):
                                    fget=get_diagonalType,
                                    fset=set_diagonalType,
                                    notify=diagonalTypeChanged)
-
-    @property
-    def beta(self):
-        """Nested sampling temperature."""
-        return self._higson.beta
-
-    @beta.setter
-    def beta(self, other: float):
-        """Setter for nested sampling temperature."""
-        self._higson.beta = other
-
-    @property
-    def higCanvas(self):
-        """Get the canvas to plot a Higson plot to."""
-        return self._higson.higCanvas()
-
-    @higCanvas.setter
-    def higCanvas(self, other):
-        """Set the canvas to plot the Higson plot to."""
-        self._higson.higCanvas = other
 
     @property
     def params(self):
