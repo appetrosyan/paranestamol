@@ -157,7 +157,7 @@ ApplicationWindow {
 						model: paramsModel
 						anchors.fill: parent
 						onSaveRequested: {
-							displayBridge.saveFigure(fileName)
+							trianglePlotter.saveFigure(fileName)
 						}
 					}
 				}

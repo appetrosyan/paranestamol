@@ -62,7 +62,7 @@ Item {
 					anchors.left: parent.left
 					anchors.right: parent.right
 					onNewTypeChosen: {
-						displayBridge.lowerType = value
+						trianglePlotter.lowerType = value
 					}
 					currentIndex: 2 // Scatter
 				}
@@ -71,7 +71,7 @@ Item {
 					anchors.left: parent.left
 					anchors.right: parent.right
 					onNewTypeChosen: {
-						displayBridge.diagonalType = value
+						trianglePlotter.diagonalType = value
 					}
 					currentIndex: 0 // Hist
 				}

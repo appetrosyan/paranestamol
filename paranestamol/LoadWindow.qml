@@ -153,7 +153,7 @@ Item{
 						anchors.left: parent.left
 						anchors.right: parent.right
 						color: selected? palette.highlightedText: palette.text
-						text: model.url
+						text: model.pretty_path
 						leftPadding: 5
 						topPadding: 5
 						bottomPadding: 5

@@ -4,6 +4,7 @@ keep the QML model in sync with the Python back end.
 """
 from anesthetic.samples import NestedSamples, MCMCSamples
 from os.path import basename
+import os.path
 import matplotlib.pyplot as plt
 from math import ceil
 
@@ -63,12 +64,11 @@ class ParameterModel(QtCore.QAbstractListModel):
             self.displayNames.add(name)
         self.isEmptyChanged.emit()
 
-
     @QtCore.Slot(object, object)
     def addParams(self, params, tex):
         self.beginResetModel()
-        if list(self.names) == []: # Pandas Index can't be compared to a list
-            self.names = params 
+        if list(self.names) == []:  # Pandas Index can't be compared to a list
+            self.names = params
         else:
             self.names.intersection([params])
             self.tex = {}
@@ -116,13 +116,14 @@ class SamplesModel(QtCore.QAbstractListModel):
     minLogLChanged = QtCore.Signal()
     maxLogLChanged = QtCore.Signal()
 
-    def __init__(self, parent=None, names=[], samples={}):
+    def __init__(self, parent=None, names={}, samples={}):
         """Construct."""
         super().__init__(parent)
         self.names = names
+        self.paths = [samples[k].root for k in samples]
         self.samples = samples
         self.legends = {}
-        self.displayed_names = set()
+        self.displayed_paths = set()
         self.parameters = {}
 
     def _minLogL(self):
@@ -158,6 +159,7 @@ class SamplesModel(QtCore.QAbstractListModel):
     logZRole = QtCore.Qt.UserRole + 1000 + 7
     dklRole = QtCore.Qt.UserRole + 1000 + 8
     bmdRole = QtCore.Qt.UserRole + 1000 + 9
+    prettyPathRole = QtCore.Qt.UserRole + 1000 + 10
 
     def roleNames(self):
         roles = {
@@ -171,72 +173,91 @@ class SamplesModel(QtCore.QAbstractListModel):
             SamplesModel.logZRole: b'logZ',
             SamplesModel.dklRole: b'Dkl',
             SamplesModel.bmdRole: b'bmd',
+            SamplesModel.prettyPathRole: b'pretty_path',
         }
         return roles
 
     def count(self):
         return len(self.samples)
-    
+
     def rowCount(self, parent=QtCore.QModelIndex()):
         if parent.isValid():
             return 0
         if len(self.names) != len(self.samples):
             raise ValueError(
-                "len(samples) {} and len(samples_names) {}, mismatch."
-                .format(len(self.names), len(self.samples)))
+                "len(samples) {} and len(samples_names) {}, mismatch.".format(
+                    len(self.names), len(self.samples)))
         return len(self.samples)
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self.samples[self.names[index.row()]]
+            item = self.samples[self.paths[index.row()]]
             if role == SamplesModel.nameRole:
-                return self.names[index.row()]
+                return self.names[self.paths[index.row()]]
             if role == SamplesModel.urlRole:
                 return item.root
             if role == SamplesModel.legendNameRole:
-                return self.legends[self.names[index.row()]].title
+                return self.legends[self.paths[index.row()]].title
             if role == SamplesModel.legendColorRole:
-                return self.legends[self.names[index.row()]].color
+                return self.legends[self.paths[index.row()]].color
             if role == SamplesModel.displayRole:
-                return self.names[index.row()] in self.displayed_names
+                return self.paths[index.row()] in self.displayed_paths
             if role == SamplesModel.samplesTypeRole:
                 if isinstance(item, NestedSamples):
                     return 'NestedSamples'
                 if isinstance(item, MCMCSamples):
                     return 'MCMCSamples'
             if role == SamplesModel.legendAlphaRole:
-                return self.legends[self.names[index.row()]].alpha
+                return self.legends[self.paths[index.row()]].alpha
             if role == SamplesModel.bmdRole:
-                return float(self.samples[self.names[index.row()]].d())
+                return float(self.samples[self.paths[index.row()]].d())
             if role == SamplesModel.dklRole:
-                return float(self.samples[self.names[index.row()]].D())
+                return float(self.samples[self.paths[index.row()]].D())
             if role == SamplesModel.logZRole:
-                return float(self.samples[self.names[index.row()]].logZ())
+                return float(self.samples[self.paths[index.row()]].logZ())
+            if role == SamplesModel.prettyPathRole:
+                paths = self.paths.copy()
+                paths.append(os.path.abspath(os.path.curdir))
+                return item.root.removeprefix(os.path.commonpath(paths))
 
     @QtCore.Slot(str)
-    def appendRow(self, file_root, *args):
-        rt, _ = cleanupFileRoot(file_root)
-        if basename(rt) not in self.names:
-            self.beginInsertRows(QtCore.QModelIndex(),
-                                 self.rowCount(), self.rowCount())
-            samples = NestedSamples(root=rt)
-            if samples is None:
-                raise ValueError('Samples were None')
-            self.names.append(basename(rt))
-            self.legends[basename(rt)] = Legend(basename(rt))
-            self.samples[basename(rt)] = samples
-            self.newParams.emit(samples.columns, samples.tex)
-            self.displayed_names.add(basename(rt))
+    def appendRow(self, file_root, *args, **kwargs):
+        worker = AsyncNestedSamplesLoader(parent=self)
+        worker.file_root = file_root
+        worker.paths = self.paths
+        worker.resultReady.connect(self.asyncAppendRowCallback)
+        worker.start()
+
+
+    @QtCore.Slot(str, object)
+    def asyncAppendRowCallback(self, rt, samples):
+        if samples is None:
+            raise ValueError(f'Failed to load {rt}.')
+        else:
+            self.beginInsertRows(QtCore.QModelIndex(), self.rowCount(), self.rowCount())
+            self.paths.append(rt)
+            self.samples[rt] = samples
+            self.names[rt] = basename(rt)
+            self.legends[rt] = Legend(basename(rt))
             self.endInsertRows()
+            self.newParams.emit(samples.columns, samples.tex)
+            self.displayed_paths.add(rt)
             self.minLogLChanged.emit()
             self.maxLogLChanged.emit()
             self.requestRepaint()
             self.isEmptyChanged.emit()
+
+    @QtCore.Slot(str)
+    def syncAppendRow(self, file_root, *args):
+        rt, _ = cleanupFileRoot(file_root)
+        if rt not in self.paths:
+            samples = NestedSamples(root=rt)
+            asyncAppendRowCallback(rt, samples)
         else:
             self.notify.emit(f'Samples: {basename(rt)} - already loaded.')
 
     def hasChildren(self):
-        return len(self.samples)>0
+        return len(self.samples) > 0
 
     def flags(self, index):
         return QtCore.Qt.ItemIsEditable | \
@@ -244,40 +265,53 @@ class SamplesModel(QtCore.QAbstractListModel):
                QtCore.Qt.ItemIsSelectable
 
     def requestRepaint(self):
-        samples = {k: self.samples[k] for k in self.displayed_names}
-        legends = {k: self.legends[k] for k in self.displayed_names}
+        samples = {k: self.samples[k] for k in self.displayed_paths}
+        legends = {k: self.legends[k] for k in self.displayed_paths}
         self.fullRepaint.emit(samples, legends)
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role == SamplesModel.legendNameRole:
-            self.legends[self.names[index.row()]].title = value
+            self.legends[self.paths[index.row()]].title = value
             self.dataChanged.emit(index, index)
             self.requestRepaint()
             return True
         if role == SamplesModel.legendColorRole:
-            self.legends[self.names[index.row()]].color = value.name()
-            self.legends[self.names[index.row()]].alpha = value.alphaF()
+            self.legends[self.paths[index.row()]].color = value.name()
+            self.legends[self.paths[index.row()]].alpha = value.alphaF()
             self.dataChanged.emit(index, index)
             self.requestRepaint()
             return True
         if role == SamplesModel.legendAlphaRole:
-            self.legends[self.names[index.row()]].alpha = value
+            self.legends[self.paths[index.row()]].alpha = value
             self.dataChanged.emit(index, index)
             self.requestRepaint()
             return True
         if role == SamplesModel.displayRole:
-            name = self.names[index.row()]
-            if name in self.displayed_names and value \
-               or (name not in self.displayed_names) and not value:
+            path = self.paths[index.row()]
+            if path in self.displayed_paths and value \
+               or (path not in self.displayed_paths) and not value:
                 return False
             else:
                 if value:
-                    self.displayed_names.add(name)
+                    self.displayed_paths.add(path)
                 else:
-                    self.displayed_names.remove(name)
+                    self.displayed_paths.remove(path)
                 self.requestRepaint()
                 return True
         else:
             return False
 
+
+class AsyncNestedSamplesLoader(QtCore.QThread):
+    resultReady = QtCore.Signal(str, object)
+
+    def run(self):
+        rt, _ = cleanupFileRoot(self.file_root)
+        if rt not in self.paths:
+            try:
+                self.resultReady.emit(rt, NestedSamples(root=rt))
+            except FileNotFoundError as e:
+                self.resultReady.emit(rt, None)
+        else:
+            self.resultReady.emit(rt, None)
 
