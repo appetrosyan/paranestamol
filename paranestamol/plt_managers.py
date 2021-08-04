@@ -33,7 +33,6 @@ def updateTrianglePlot(figure,
         .get_legend_handles_labels()
     figure.legend(handles, labels)
     # figure.tight_layout()
-    # print(axes[params[0]][params[0]].patches)
     return figure
 
 
