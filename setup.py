@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='paranestamol',
-    version='0.0.13',
+    version='0.1.0',
     description='A QtQuick-based nested sampling visualisation tool.',
     author='Aleksandr Petrosyan',
     author_email='a-p-petrosyan@yandex.ru',
