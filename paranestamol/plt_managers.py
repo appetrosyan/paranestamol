@@ -201,9 +201,9 @@ class TrianglePlotter(QtCore.QObject):
 
     @QtCore.Slot(float)
     def changeTemperature(self, beta, *args):
-        """Change the nested samples' temperature and request an update to the affected plot."""
-        self.beta = beta
-        self._higson._update_higson(self.samples, self.legends)
+        """Change nested samples' temperature, update affected plot."""
+        self.higson.beta = beta
+        self.higson.update(self.samples, self.legends)
 
     @QtCore.Slot()
     @QtCore.Slot(object)
@@ -221,7 +221,11 @@ class TrianglePlotter(QtCore.QObject):
                 self.legends = legends
         self.invalidateCache()
         self._stack.pop()
-        self._higson._update_higson(self.samples, self.legends)
+        self.higson.update(self.samples, self.legends)
+
+    @QtCore.Slot(object)
+    def catch(self, exception):
+        raise exception
 
 
 class HigsonPlotter(QtCore.QObject):
@@ -243,22 +247,23 @@ class HigsonPlotter(QtCore.QObject):
         self._beta = other
 
     @property
-    def higCanvas(self):
+    def canvas(self):
         """Higson canvas to plot to."""
         return self._higCanvas
 
-    @higCanvas.setter
-    def higCanvas(self, other):
+    @canvas.setter
+    def canvas(self, other):
         self._higCanvas = other
-        self.ax = self.higCanvas.figure.gca()
+        self.ax = self.canvas.figure.gca()
         self.ax.cla()
         self.ax.xaxis.set_tick_params(labeltop='on')
         self.ax.xaxis.set_tick_params(labelbottom=False)
         self.ax.set_xlabel(r'$\log X$')
         self.ax.set_ylabel(r'$LX$', labelpad=-30)
-        self.higCanvas.figure.set_tight_layout({'pad': 0})
+        self.canvas.figure.set_tight_layout({'pad': 0})
 
-    def _update_higson(self, samples, legends):
+    def update(self, samples, legends):
+        """Update the Higson plot."""
         self.ax.lines.clear()
         for x in samples:
             if self.beta in self._cache and x in self._cache[self.beta]:
@@ -275,21 +280,26 @@ class HigsonPlotter(QtCore.QObject):
                     self._cache[self.beta] = {}
                     self._cache[self.beta][x] = (logX, LX)
             self.ax.plot(logX[::-1], LX, color=legends[x].color)
-        self.higCanvas.draw_idle()
+        self.canvas.draw_idle()
 
 
 class ThreadedPlotter(QtCore.QObject):
     """A Qt Threading based signal operated plotter."""
 
     finished = QtCore.Signal(float, object)
+    forward_exceptions = QtCore.Signal(object)
 
     @QtCore.Slot(object, object, object, object, object, float)
     @QtCore.Slot(object, object, object, object, object, float, object)
     def plot_triangle(self, *args):
         """Start plotting a triangle plot."""
         self.busy = True
-        fig = updateTrianglePlot(*args)
-        self.finished.emit(args[-2], fig)
+        try:
+            fig = updateTrianglePlot(*args)
+            self.finished.emit(args[-2], fig)
+        except BaseException as e:
+            print(e)
+            self.forward_exceptions.emit(e)
         self.busy = False
 
 
