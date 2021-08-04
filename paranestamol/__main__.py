@@ -44,14 +44,13 @@ def main():
     QtQml.qmlRegisterType(FigureCanvasQML, "Backend", 1, 0, "FigureCanvas")
     args = parse_args()
 
-    engine = QtQml.QQmlApplicationEngine()
+    engine = QtQml.QQmlApplicationEngine(parent=app)
     context = engine.rootContext()
-    paramsModel = ParameterModel()
-    samplesModel = SamplesModel()
-    print(samplesModel)
-    displayBridge = TrianglePlotter(paramsModel)
+    paramsModel = ParameterModel(parent=app)
+    samplesModel = SamplesModel(parent=app)
+    trianglePlotter = TrianglePlotter(paramsModel, parent=engine)
 
-    context.setContextProperty("displayBridge", displayBridge)
+    context.setContextProperty("trianglePlotter", trianglePlotter)
     proxy = QtCore.QSortFilterProxyModel()
     proxy.setSourceModel(paramsModel)
     proxy.setFilterRole(ParameterModel.nameRole)
@@ -63,27 +62,25 @@ def main():
     engine.load(qmlFileRoot)
 
     win = engine.rootObjects()[0]
-    displayBridge.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
-    displayBridge.higCanvas = win.findChild(QtCore.QObject, "higsonPlot")
-    displayBridge.notify.connect(win.displayPythonMessage)
+    trianglePlotter.triCanvas = win.findChild(QtCore.QObject, "trianglePlot")
+    trianglePlotter.higson.canvas = win.findChild(QtCore.QObject, "higsonPlot")
+    trianglePlotter.notify.connect(win.displayPythonMessage)
     samplesModel.notify.connect(win.displayPythonMessage)
-    samplesModel.fullRepaint.connect(displayBridge.reDraw)
+    samplesModel.fullRepaint.connect(trianglePlotter.reDraw)
     samplesModel.newParams.connect(paramsModel.addParams)
-    paramsModel.dataChanged.connect(displayBridge.reDraw)
-    paramsModel.dataChanged.connect(displayBridge.invalidateCache)
+    paramsModel.dataChanged.connect(trianglePlotter.reDraw)
+    paramsModel.dataChanged.connect(trianglePlotter.invalidateCache)
 
     temperatureSlider = win.findChild(QtCore.QObject, "temperature_slider")
-    print(temperatureSlider)
     temperatureSlider.valueChangeStarted\
-                     .connect(displayBridge.changeTemperature)
+                     .connect(trianglePlotter.changeTemperature)
     loglSlider = win.findChild(QtCore.QObject, "logl_slider")
-    loglSlider.valueChangeStarted.connect(displayBridge.changeLogL)
+    loglSlider.valueChangeStarted.connect(trianglePlotter.changeLogL)
 
     for file_root in args.file_roots:
         try:
             samplesModel.appendRow(file_root)
         except FileNotFoundError as err:
-            print(f'{err}', file=sys.stderr)
             samplesModel.notify.emit(f"Error: {err}")
     sys.exit(app.exec_())
 
