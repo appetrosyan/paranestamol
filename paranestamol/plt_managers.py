@@ -145,12 +145,8 @@ class TrianglePlotter(QtCore.QObject):
 
     def _animationUpdater(self, fig):
         def update(logL):
-            updateTrianglePlot(fig,
-                               self.params,
-                               self.tex,
-                               self.samples,
-                               self.legends,
-                               logL)
+            updateTrianglePlot(fig, self.params, self.tex, self.samples,
+                               self.legends, logL)
             return fig
 
         return update
@@ -170,7 +166,7 @@ class TrianglePlotter(QtCore.QObject):
             ani.save(filename)
             self.notify.emit("Done!" +
                              f"Animation saved to <i>{filename}</i>.")
-        else: 
+        else:
             self.triCanvas.figure.savefig(fname=url.toLocalFile())
 
     @QtCore.Slot()
@@ -230,7 +226,6 @@ class TrianglePlotter(QtCore.QObject):
 
 class HigsonPlotter(QtCore.QObject):
     """A class that handles the plotting and deployment of a higson plot."""
-
     def __init__(self, parent=None):
         """Construct a higson Plotter."""
         super().__init__(parent)
