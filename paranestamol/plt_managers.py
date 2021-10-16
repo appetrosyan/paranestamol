@@ -1,4 +1,4 @@
-"""The plotting and updating logic is hanlded in this file"""
+"""The plotting logic."""
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 from anesthetic import make_2d_axes
@@ -14,6 +14,7 @@ def updateTrianglePlot(figure,
                        legends,
                        logL,
                        kinds=None):
+    """Create a triangle plot using the samples, and parameters."""
     figure, axes = make_2d_axes(params, tex=tex, fig=figure, upper=False)
     if kinds is None:
         kinds = {
@@ -74,7 +75,7 @@ class TrianglePlotter(QtCore.QObject):
         """Get lower plot type."""
         return self.plotTypes['lower']
 
-    def set_lowerType(self, other):
+    def set_lowerPlotType(self, other):
         """Set lower plot type."""
         if other in {"kde", "scatter", "fastkde"}:
             self.plotTypes['lower'] = other
@@ -84,7 +85,7 @@ class TrianglePlotter(QtCore.QObject):
 
     lowerType = QtCore.Property(str,
                                 fget=get_lowerType,
-                                fset=set_lowerType,
+                                fset=set_lowerPlotType,
                                 notify=lowerTypeChanged)
 
     def get_diagonalType(self):
@@ -221,11 +222,13 @@ class TrianglePlotter(QtCore.QObject):
 
     @QtCore.Slot(object)
     def catch(self, exception):
+        """Catch and re-raise an exception."""
         raise exception
 
 
 class HigsonPlotter(QtCore.QObject):
     """A class that handles the plotting and deployment of a higson plot."""
+
     def __init__(self, parent=None):
         """Construct a higson Plotter."""
         super().__init__(parent)
